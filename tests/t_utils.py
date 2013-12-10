@@ -14,11 +14,14 @@ class UnitTest(unittest.TestCase):
         self.kt_core = kyototycoon.kt_http.ProtocolHandler()
 
     def test_packer(self):
-        str = 'hello world sir'
-        buf = self.kt_core._pickle_packer(str)
-        assert buf != str
+        stri = 'hello world sir'
+        buf = self.kt_core._pickle_packer(stri)
+        if type(stri) is str:
+            assert buf == stri
+        else:
+            assert buf != stri
         ret = self.kt_core._pickle_unpacker(buf)
-        self.assertEqual(str, ret)
+        self.assertEqual(stri, ret)
 
         num = 777
         buf = self.kt_core._pickle_packer(num)

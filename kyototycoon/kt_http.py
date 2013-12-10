@@ -845,6 +845,8 @@ class ProtocolHandler(object):
         return res.status
 
     def _pickle_packer(self, data):
+        if type(data) is str:
+            return data
         return pickle.dumps(data, self.pickle_protocol)
 
     def _pickle_unpacker(self, data):
@@ -852,4 +854,9 @@ class ProtocolHandler(object):
             res = pickle.loads(data)
         except EOFError as err:
             res = ""
+        except pickle.UnpicklingError as err:
+            if type(data) is str:
+                res = data
+            else:
+                raise
         return res
