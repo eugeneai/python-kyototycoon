@@ -873,6 +873,8 @@ class ProtocolHandler(object):
             res = pickle.loads(data)
         except EOFError as err:
             res = ""
+        except ValueError as err:
+            res = data
         except pickle.UnpicklingError as err:
             if type(data) is str:
                 res = data
