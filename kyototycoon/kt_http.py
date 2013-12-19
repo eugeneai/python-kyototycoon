@@ -22,6 +22,8 @@ try:
 except ImportError:
     import pickle
 
+import json
+
 # Stick with URL encoding for now. Eventually run a benchmark
 # to evaluate what the most approariate encoding algorithm is.
 KT_HTTP_HEADER = {
@@ -327,6 +329,10 @@ class ProtocolHandler(object):
         if self.pack_type == KT_PACKER_PICKLE:
             self.pack = self._pickle_packer
             self.unpack = self._pickle_unpacker
+
+        elif self.pack_type == KT_PACKER_JSON:
+            self.pack = self._json_packer
+            self.unpack = self._json_unpacker
 
         elif self.pack_type == KT_PACKER_STRING:
             self.pack = lambda data: data
@@ -881,3 +887,9 @@ class ProtocolHandler(object):
             else:
                 raise
         return res
+
+    def _json_packer(self, data):
+        return json.dumps(data)
+
+    def _json_unpacker(self, data):
+        return json.loads(data)
