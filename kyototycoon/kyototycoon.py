@@ -9,6 +9,7 @@
 # standard: http://fallabs.com/kyototycoon/kyototycoon.idl
 
 import kt_http
+import kt_binary
 
 KT_DEFAULT_HOST = '127.0.0.1'
 KT_DEFAULT_PORT = 1978
@@ -16,7 +17,10 @@ KT_DEFAULT_TIMEOUT = 30
 
 class KyotoTycoon(object):
     def __init__(self, binary=False, *args, **kwargs):
-        self.core = kt_http.ProtocolHandler(*args, **kwargs)
+        if binary:
+            self.core = kt_binary.ProtocolHandler(*args, **kwargs)
+        else:
+            self.core = kt_http.ProtocolHandler(*args, **kwargs)
 
     def error(self):
         return self.core.error()
