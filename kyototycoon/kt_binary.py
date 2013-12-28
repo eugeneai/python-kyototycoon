@@ -119,7 +119,30 @@ class ProtocolHandler(object):
         return num_items
 
     def remove_bulk(self, keys, atomic, db):
-        raise NotImplementedError
+        if not hasattr(keys, '__iter__'):
+            self.err.set_error(self.err.LOGIC)
+            return 0
+
+        if db is None:
+            db = 0
+
+        request = [struct.pack('!BI', MB_REMOVE_BULK, 0), struct.pack('!I', len(keys))]
+
+        for key in keys:
+            request.append(struct.pack('!HI', db, len(key)))
+            request.append(key)
+
+        self._write(''.join(request))
+
+        magic, = struct.unpack('!B', self._read(1))
+        if magic != MB_REMOVE_BULK:
+            self.err.set_error(self.err.INTERNAL)
+            return False
+
+        num_items, = struct.unpack('!I', self._read(4))
+
+        self.err.set_success()
+        return num_items
 
     def get_bulk(self, keys, atomic, db):
         if not hasattr(keys, '__iter__'):
@@ -173,7 +196,11 @@ class ProtocolHandler(object):
         raise NotImplementedError
 
     def remove(self, key, db):
-        raise NotImplementedError
+        if key is None:
+            self.err.set_error(self.err.LOGIC)
+            return False
+
+        return self.remove_bulk([key], True, db)
 
     def replace(self, key, value, expire, db):
         raise NotImplementedError
