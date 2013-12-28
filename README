@@ -17,6 +17,20 @@ This fork is backwards compatible, and includes cursor support
 and significant performance improvements over the original
 library.
 
+The binary protocol is also supported along the HTTP protocol,
+but for a minimal subset of operations only, namely:
+
+    - get() and get_bulk()
+    - set() and set_bulk()
+    - remove() and remove_bulk()
+
+These methods are based on Ulrich Mierendorff's code with only
+minimal changes to make it fit this library. You can find the
+original library supporting the binary protocol at his website.
+
+http://www.ulrichmierendorff.com/software/kyoto_tycoon/python_library.html
+
+
 INSTALLATION
 ------------
 Using pip::
