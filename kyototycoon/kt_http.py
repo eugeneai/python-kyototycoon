@@ -394,8 +394,7 @@ class ProtocolHandler(object):
 
         path = key
         if db:
-            path = '/%s/%s' % (db, key)
-        path = quote(path.encode('UTF-8'))
+            path = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
 
         self.conn.request('GET', path)
         res, body = self.getresponse()
@@ -526,8 +525,7 @@ class ProtocolHandler(object):
 
         path = key
         if db:
-            path = '/%s/%s' % (db, key)
-        path = quote(path.encode('UTF-8'))
+            path = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
 
         self.conn.request('GET', path)
 
@@ -657,9 +655,8 @@ class ProtocolHandler(object):
             return False
 
         if db:
-            key = '/%s/%s' % (db, key)
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
 
-        key = quote(key.encode('UTF-8'))
         value = self.pack(value)
         status = self._rest_put('add', key, value, expire)
 
@@ -707,9 +704,8 @@ class ProtocolHandler(object):
             return False
 
         if db:
-            key = '/%s/%s' % (db, key)
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
 
-        key = quote(key.encode('UTF-8'))
         self.conn.request('DELETE', key)
 
         res, body = self.getresponse()
