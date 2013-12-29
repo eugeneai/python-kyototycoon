@@ -11,7 +11,6 @@
 
 import socket
 import struct
-import time
 import kt_error
 
 try:
