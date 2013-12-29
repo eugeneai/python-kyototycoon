@@ -68,12 +68,6 @@ class ProtocolHandler(object):
         self.socket.close()
         return True
 
-    def getresponse(self):
-        raise NotImplementedError
-
-    def echo(self):
-        raise NotImplementedError
-
     def get(self, key, db=None):
         if key is None:
             return False
