@@ -37,6 +37,7 @@ class ProtocolHandler(object):
         self.err = kt_error.KyotoTycoonError()
         self.pickle_protocol = pickle_protocol
         self.pack_type = pack_type
+        self.socket = None
 
         if self.pack_type == KT_PACKER_PICKLE:
             self.pack = self._pickle_packer
@@ -64,6 +65,7 @@ class ProtocolHandler(object):
         return True
 
     def close(self):
+        self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         return True
 
@@ -262,10 +264,12 @@ class ProtocolHandler(object):
         buf = []
         read = 0
         while read < bytecnt:
-            recv = self.socket.recv(bytecnt-read)
-            if recv:
-                buf.append(recv)
-                read += len(recv)
+            recv = self.socket.recv(bytecnt - read)
+            if not recv:
+                raise IOError("no data while reading")
+
+            buf.append(recv)
+            read += len(recv)
 
         return ''.join(buf)
 
