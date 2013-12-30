@@ -94,7 +94,13 @@ class ProtocolHandler(object):
         request = [struct.pack('!BI', MB_SET_BULK, 0), struct.pack('!I', len(kv_dict))]
 
         for key, value in kv_dict.iteritems():
+            key = key.encode("ascii")
             value = self.pack(value)
+
+            # For consistency with the HTTP implementation's error behavior...
+            if isinstance(value, unicode):
+                value = value.encode("ascii")
+
             request.append(struct.pack('!HIIq', db, len(key), len(value), expire))
             request.append(key)
             request.append(value)
@@ -122,6 +128,7 @@ class ProtocolHandler(object):
         request = [struct.pack('!BI', MB_REMOVE_BULK, 0), struct.pack('!I', len(keys))]
 
         for key in keys:
+            key = key.encode("ascii")
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
@@ -148,6 +155,7 @@ class ProtocolHandler(object):
         request = [struct.pack('!BI', MB_GET_BULK, 0), struct.pack('!I', len(keys))]
 
         for key in keys:
+            key = key.encode("ascii")
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
