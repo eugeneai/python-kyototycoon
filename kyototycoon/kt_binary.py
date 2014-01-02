@@ -37,6 +37,7 @@ class ProtocolHandler(object):
         self.err = kt_error.KyotoTycoonError()
         self.pickle_protocol = pickle_protocol
         self.pack_type = pack_type
+        self.socket = None
 
         if self.pack_type == KT_PACKER_PICKLE:
             self.pack = self._pickle_packer
@@ -64,6 +65,7 @@ class ProtocolHandler(object):
         return True
 
     def close(self):
+        self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         return True
 
@@ -94,7 +96,13 @@ class ProtocolHandler(object):
         request = [struct.pack('!BI', MB_SET_BULK, 0), struct.pack('!I', len(kv_dict))]
 
         for key, value in kv_dict.iteritems():
+            key = key.encode("ascii")
             value = self.pack(value)
+
+            # For consistency with the HTTP implementation's error behavior...
+            if isinstance(value, unicode):
+                value = value.encode("ascii")
+
             request.append(struct.pack('!HIIq', db, len(key), len(value), expire))
             request.append(key)
             request.append(value)
@@ -122,6 +130,7 @@ class ProtocolHandler(object):
         request = [struct.pack('!BI', MB_REMOVE_BULK, 0), struct.pack('!I', len(keys))]
 
         for key in keys:
+            key = key.encode("ascii")
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
@@ -148,6 +157,7 @@ class ProtocolHandler(object):
         request = [struct.pack('!BI', MB_GET_BULK, 0), struct.pack('!I', len(keys))]
 
         for key in keys:
+            key = key.encode("ascii")
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
@@ -254,10 +264,12 @@ class ProtocolHandler(object):
         buf = []
         read = 0
         while read < bytecnt:
-            recv = self.socket.recv(bytecnt-read)
-            if recv:
-                buf.append(recv)
-                read += len(recv)
+            recv = self.socket.recv(bytecnt - read)
+            if not recv:
+                raise IOError("no data while reading")
+
+            buf.append(recv)
+            read += len(recv)
 
         return ''.join(buf)
 
