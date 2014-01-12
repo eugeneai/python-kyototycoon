@@ -18,7 +18,8 @@ and significant performance improvements over the original
 library.
 
 The binary protocol is also supported along the HTTP protocol,
-but for a minimal subset of operations only, namely:
+for a performance improvement of around 6x. Only a minimal
+subset of operations are supported for this protocol, namely:
 
     - get() and get_bulk()
     - set() and set_bulk()
@@ -41,6 +42,16 @@ Or, from source::
 
     python setup.py build
     sudo python setup.py install
+
+
+KNOWN ISSUES
+------------
+    * When using the HTTP protocol and KT_PACKER_STRING, if
+      values are unicode strings "set()" is about 20x slower
+      compared to non-unicode strings.
+    * With Python 2.6, all HTTP operations are about 20x
+      slower than Python 2.7. There is no such difference
+      when using the binary protocol.
 
 
 AUTHORS
