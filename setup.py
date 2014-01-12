@@ -14,11 +14,11 @@ setup(
     maintainer_email='stephen.hamer@upverter.com',
     name='python-kyototycoon',
     description='Kyoto Tycoon Client Library',
-    version='0.4.8',
+    version='0.5.1',
     license='BSD',
     keywords='Kyoto Tycoon, Kyoto Cabinet',
     packages=['kyototycoon'],
-    requires=['percentcoding'],
+    requires=['percentcoding', 'cjson'],
     url='https://github.com/upverter/python-kyototycoon',
     zip_safe=False
 )
