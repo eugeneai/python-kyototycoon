@@ -11,14 +11,20 @@
 
 import socket
 import struct
-import kt_error
+
+from . import kt_error
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
-import json
+try:
+    import cjson as json
+    json.dumps = json.encode
+    json.loads = json.decode
+except ImportError:
+    import json
 
 KT_PACKER_CUSTOM = 0
 KT_PACKER_PICKLE = 1
@@ -93,15 +99,15 @@ class ProtocolHandler(object):
         if expire is None:
             expire = DEFAULT_EXPIRE
 
-        request = [struct.pack('!BI', MB_SET_BULK, 0), struct.pack('!I', len(kv_dict))]
+        request = [struct.pack('!BII', MB_SET_BULK, 0, len(kv_dict))]
 
         for key, value in kv_dict.iteritems():
-            key = key.encode("ascii")
+            key = key.encode('ascii')
             value = self.pack(value)
 
             # For consistency with the HTTP implementation's error behavior...
-            if isinstance(value, unicode):
-                value = value.encode("ascii")
+            if isinstance(value, type(u'')):
+                value = value.encode('ascii')
 
             request.append(struct.pack('!HIIq', db, len(key), len(value), expire))
             request.append(key)
@@ -127,10 +133,10 @@ class ProtocolHandler(object):
         if db is None:
             db = 0
 
-        request = [struct.pack('!BI', MB_REMOVE_BULK, 0), struct.pack('!I', len(keys))]
+        request = [struct.pack('!BII', MB_REMOVE_BULK, 0, len(keys))]
 
         for key in keys:
-            key = key.encode("ascii")
+            key = key.encode('ascii')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
@@ -154,10 +160,10 @@ class ProtocolHandler(object):
         if db is None:
             db = 0
 
-        request = [struct.pack('!BI', MB_GET_BULK, 0), struct.pack('!I', len(keys))]
+        request = [struct.pack('!BII', MB_GET_BULK, 0, len(keys))]
 
         for key in keys:
-            key = key.encode("ascii")
+            key = key.encode('ascii')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 

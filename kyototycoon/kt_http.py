@@ -9,7 +9,9 @@ import base64
 import httplib
 import struct
 import time
-import kt_error
+
+from . import kt_error
+
 try:
     from percentcoding import quote, unquote
 except ImportError:
@@ -22,7 +24,12 @@ try:
 except ImportError:
     import pickle
 
-import json
+try:
+    import cjson as json
+    json.dumps = json.encode
+    json.loads = json.decode
+except ImportError:
+    import json
 
 # Stick with URL encoding for now. Eventually run a benchmark
 # to evaluate what the most approariate encoding algorithm is.
@@ -36,7 +43,7 @@ KT_PACKER_JSON   = 2
 KT_PACKER_STRING = 3
 
 def _dict_to_tsv(dict):
-    return '\n'.join(quote(k) + '\t' + quote(str(v)) for (k, v) in dict.items())
+    return '\n'.join(quote(k) + '\t' + quote(str(v)) for (k, v) in dict.iteritems())
 
 def _content_type_decoder(content_type=''):
     ''' Select the appropriate decoding function to use based on the response headers. '''
@@ -356,14 +363,14 @@ class ProtocolHandler(object):
 
         try:
             self.conn = httplib.HTTPConnection(host, port, timeout=timeout)
-        except Exception, e:
+        except Exception as e:
             raise e
         return True
 
     def close(self):
         try:
             self.conn.close()
-        except Exception, e:
+        except Exception as e:
             raise e
         return True
 
@@ -427,7 +434,7 @@ class ProtocolHandler(object):
         if atomic:
             request_body = 'atomic\t\n'
 
-        for k, v in kv_dict.items():
+        for k, v in kv_dict.iteritems():
             k = quote(k)
             v = quote(self.pack(v))
             request_body += '_' + k + '\t' + v + '\n'
@@ -511,7 +518,7 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.NOTFOUND)
             return {}
 
-        for k, v in res_dict.items():
+        for k, v in res_dict.iteritems():
             if v is not None:
                 rv[k[1:]] = self.unpack(v)
 

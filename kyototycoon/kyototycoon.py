@@ -8,8 +8,8 @@
 # Note that python-kyototycoon follows the following interface
 # standard: http://fallabs.com/kyototycoon/kyototycoon.idl
 
-import kt_http
-import kt_binary
+from . import kt_http
+from . import kt_binary
 
 KT_DEFAULT_HOST = '127.0.0.1'
 KT_DEFAULT_PORT = 1978
