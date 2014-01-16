@@ -18,7 +18,7 @@ setup(
     license='BSD',
     keywords='Kyoto Tycoon, Kyoto Cabinet',
     packages=['kyototycoon'],
-    requires=['percentcoding', 'cjson'],
+    requires=['percentcoding', 'simplejson'],
     url='https://github.com/upverter/python-kyototycoon',
     zip_safe=False
 )

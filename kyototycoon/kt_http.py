@@ -25,9 +25,7 @@ except ImportError:
     import pickle
 
 try:
-    import cjson as json
-    json.dumps = json.encode
-    json.loads = json.decode
+    import simplejson as json
 except ImportError:
     import json
 
