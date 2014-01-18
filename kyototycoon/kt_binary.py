@@ -1,6 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
-# Copyright 2011, Toru Maesaka
+# Copyright 2013, Carlos Rodrigues
 #
 # Redistribution and use of this source code is licensed under
 # the BSD license. See COPYING file for license description.
@@ -39,24 +40,22 @@ DEFAULT_EXPIRE = 0x7fffffffffffffff
 class ProtocolHandler(object):
     def __init__(self, pack_type=KT_PACKER_PICKLE, pickle_protocol=2):
         self.err = kt_error.KyotoTycoonError()
-        self.pickle_protocol = pickle_protocol
-        self.pack_type = pack_type
         self.socket = None
 
-        if self.pack_type == KT_PACKER_PICKLE:
-            self.pack = self._pickle_packer
-            self.unpack = self._pickle_unpacker
+        if pack_type == KT_PACKER_PICKLE:
+            self.pack = lambda data: pickle.dumps(data, pickle_protocol)
+            self.unpack = lambda data: pickle.loads(data)
 
-        elif self.pack_type == KT_PACKER_JSON:
-            self.pack = self._json_packer
-            self.unpack = self._json_unpacker
+        elif pack_type == KT_PACKER_JSON:
+            self.pack = lambda data: json.dumps(data).encode('UTF-8')
+            self.unpack = lambda data: json.loads(data.decode('UTF-8'))
 
-        elif self.pack_type == KT_PACKER_STRING:
-            self.pack = lambda data: data
-            self.unpack = lambda data: data
+        elif pack_type == KT_PACKER_STRING:
+            self.pack = lambda data: data.encode('UTF-8')
+            self.unpack = lambda data: data.decode('UTF-8')
 
         else:
-            raise Exception('unknown pack type specified')
+            raise Exception('unsupported pack type specified')
 
     def error(self):
         return self.err
@@ -99,19 +98,15 @@ class ProtocolHandler(object):
 
         request = [struct.pack('!BII', MB_SET_BULK, 0, len(kv_dict))]
 
-        for key, value in kv_dict.iteritems():
-            key = key.encode('ascii')
+        for key, value in kv_dict.items():
+            key = key.encode('UTF-8')
             value = self.pack(value)
-
-            # For consistency with the HTTP implementation's error behavior...
-            if isinstance(value, type(u'')):
-                value = value.encode('ascii')
 
             request.append(struct.pack('!HIIq', db, len(key), len(value), expire))
             request.append(key)
             request.append(value)
 
-        self._write(''.join(request))
+        self._write(b''.join(request))
 
         magic, = struct.unpack('!B', self._read(1))
         if magic != MB_SET_BULK:
@@ -134,11 +129,11 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_REMOVE_BULK, 0, len(keys))]
 
         for key in keys:
-            key = key.encode('ascii')
+            key = key.encode('UTF-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
-        self._write(''.join(request))
+        self._write(b''.join(request))
 
         magic, = struct.unpack('!B', self._read(1))
         if magic != MB_REMOVE_BULK:
@@ -161,11 +156,11 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_GET_BULK, 0, len(keys))]
 
         for key in keys:
-            key = key.encode('ascii')
+            key = key.encode('UTF-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
-        self._write(''.join(request))
+        self._write(b''.join(request))
 
         magic, = struct.unpack('!B', self._read(1))
         if magic != MB_GET_BULK:
@@ -174,11 +169,11 @@ class ProtocolHandler(object):
 
         num_items, = struct.unpack('!I', self._read(4))
         items = {}
-        for i in xrange(num_items):
+        for i in range(num_items):
             key_db, key_length, value_length, key_expire = struct.unpack('!HIIq', self._read(18))
             key = self._read(key_length)
             value = self._read(value_length)
-            items[key] = self.unpack(value)
+            items[key.decode('UTF-8')] = self.unpack(value)
         return items
 
     def get_int(self, key, db=None):
@@ -194,7 +189,8 @@ class ProtocolHandler(object):
         raise NotImplementedError
 
     def set(self, key, value, expire, db):
-        return self.set_bulk({key: value}, expire, True, db)
+        numitems = self.set_bulk({key: value}, expire, True, db)
+        return numitems > 0
 
     def add(self, key, value, expire, db):
         raise NotImplementedError
@@ -207,7 +203,8 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        return self.remove_bulk([key], True, db)
+        numitems = self.remove_bulk([key], True, db)
+        return numitems > 0
 
     def replace(self, key, value, expire, db):
         raise NotImplementedError
@@ -236,31 +233,6 @@ class ProtocolHandler(object):
     def size(self, db=None):
         raise NotImplementedError
 
-    def _pickle_packer(self, data):
-        if type(data) is str:
-            return data
-        return pickle.dumps(data, self.pickle_protocol)
-
-    def _pickle_unpacker(self, data):
-        try:
-            res = pickle.loads(data)
-        except EOFError as err:
-            res = ""
-        except ValueError as err:
-            res = data
-        except pickle.UnpicklingError as err:
-            if type(data) is str:
-                res = data
-            else:
-                raise
-        return res
-
-    def _json_packer(self, data):
-        return json.dumps(data)
-
-    def _json_unpacker(self, data):
-        return json.loads(data)
-
     def _write(self, data):
         self.socket.sendall(data)
 
@@ -270,10 +242,11 @@ class ProtocolHandler(object):
         while read < bytecnt:
             recv = self.socket.recv(bytecnt - read)
             if not recv:
-                raise IOError("no data while reading")
+                raise IOError('no data while reading')
 
             buf.append(recv)
             read += len(recv)
 
-        return ''.join(buf)
+        return b''.join(buf)
 
+# vim: set expandtab ts=4 sw=4

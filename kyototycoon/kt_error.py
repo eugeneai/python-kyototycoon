@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright 2011, Toru Maesaka
 #
@@ -58,3 +59,5 @@ class KyotoTycoonError(object):
 
     def message(self):
         return self.error_message
+
+# vim: set expandtab ts=4 sw=4

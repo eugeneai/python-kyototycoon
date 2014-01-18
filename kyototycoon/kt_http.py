@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright 2011, Toru Maesaka
 #
@@ -6,18 +7,27 @@
 # the BSD license. See COPYING file for license description.
 
 import base64
-import httplib
 import struct
 import time
 
 from . import kt_error
 
 try:
+    import httplib
+except ImportError:
+    import http.client as httplib
+
+try:
     from percentcoding import quote, unquote
 except ImportError:
-    from urllib import quote as _quote
-    from urllib import unquote
-    quote = lambda s: _quote(s, safe="")
+    try:
+        from urllib import quote as _quote
+        from urllib import unquote
+    except ImportError:
+        from urllib.parse import quote as _quote
+        from urllib.parse import unquote
+
+    quote = lambda s: _quote(s, safe='')
 
 try:
     import cPickle as pickle
@@ -41,7 +51,7 @@ KT_PACKER_JSON   = 2
 KT_PACKER_STRING = 3
 
 def _dict_to_tsv(dict):
-    return '\n'.join(quote(k) + '\t' + quote(str(v)) for (k, v) in dict.iteritems())
+    return '\n'.join(quote(k) + '\t' + quote(str(v)) for (k, v) in dict.items())
 
 def _content_type_decoder(content_type=''):
     ''' Select the appropriate decoding function to use based on the response headers. '''
@@ -328,23 +338,21 @@ class Cursor(object):
 class ProtocolHandler(object):
     def __init__(self, pack_type=KT_PACKER_PICKLE, pickle_protocol=2):
         self.err = kt_error.KyotoTycoonError()
-        self.pickle_protocol = pickle_protocol
-        self.pack_type = pack_type
 
-        if self.pack_type == KT_PACKER_PICKLE:
-            self.pack = self._pickle_packer
-            self.unpack = self._pickle_unpacker
+        if pack_type == KT_PACKER_PICKLE:
+            self.pack = lambda data: pickle.dumps(data, pickle_protocol)
+            self.unpack = lambda data: pickle.loads(data)
 
-        elif self.pack_type == KT_PACKER_JSON:
-            self.pack = self._json_packer
-            self.unpack = self._json_unpacker
+        elif pack_type == KT_PACKER_JSON:
+            self.pack = lambda data: json.dumps(data).encode('UTF-8')
+            self.unpack = lambda data: json.loads(data.decode('UTF-8'))
 
-        elif self.pack_type == KT_PACKER_STRING:
-            self.pack = lambda data: data
-            self.unpack = lambda data: data
+        elif pack_type == KT_PACKER_STRING:
+            self.pack = lambda data: data.encode('UTF-8')
+            self.unpack = lambda data: data.decode('UTF-8')
 
         else:
-            raise Exception('unknown pack type specified')
+            raise Exception('unsupported pack type specified')
 
     def error(self):
         return self.err
@@ -397,11 +405,11 @@ class ProtocolHandler(object):
         if key is None:
             return False
 
-        path = key
+        key = quote(key.encode('UTF-8'))
         if db:
-            path = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
 
-        self.conn.request('GET', path)
+        self.conn.request('GET', key)
         res, body = self.getresponse()
 
         if res.status == 404:
@@ -432,7 +440,7 @@ class ProtocolHandler(object):
         if atomic:
             request_body = 'atomic\t\n'
 
-        for k, v in kv_dict.iteritems():
+        for k, v in kv_dict.items():
             k = quote(k)
             v = quote(self.pack(v))
             request_body += '_' + k + '\t' + v + '\n'
@@ -516,7 +524,7 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.NOTFOUND)
             return {}
 
-        for k, v in res_dict.iteritems():
+        for k, v in res_dict.items():
             if v is not None:
                 rv[k[1:]] = self.unpack(v)
 
@@ -528,11 +536,11 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        path = key
+        key = quote(key.encode('UTF-8'))
         if db:
-            path = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
 
-        self.conn.request('GET', path)
+        self.conn.request('GET', key)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -659,8 +667,9 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
+        key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
 
         value = self.pack(value)
         status = self._rest_put('add', key, value, expire)
@@ -708,8 +717,9 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
+        key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), quote(key).encode('UTF-8'))
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
 
         self.conn.request('DELETE', key)
 
@@ -870,27 +880,4 @@ class ProtocolHandler(object):
         res, body = self.getresponse()
         return res.status
 
-    def _pickle_packer(self, data):
-        if type(data) is str:
-            return data
-        return pickle.dumps(data, self.pickle_protocol)
-
-    def _pickle_unpacker(self, data):
-        try:
-            res = pickle.loads(data)
-        except EOFError as err:
-            res = ""
-        except ValueError as err:
-            res = data
-        except pickle.UnpicklingError as err:
-            if type(data) is str:
-                res = data
-            else:
-                raise
-        return res
-
-    def _json_packer(self, data):
-        return json.dumps(data)
-
-    def _json_unpacker(self, data):
-        return json.loads(data)
+# vim: set expandtab ts=4 sw=4
