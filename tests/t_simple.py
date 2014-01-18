@@ -276,13 +276,15 @@ class UnitTest(unittest.TestCase):
 
     def test_cursor(self):
         self.assertTrue(self.kt_handle.clear())
+        self.assertEqual(self.kt_handle.count(), 0)
         self.assertTrue(self.kt_handle.set('abc', 'val'))
         self.assertTrue(self.kt_handle.set('abcd', 'val'))
         self.assertTrue(self.kt_handle.set('abcde', 'val'))
+        self.assertEqual(self.kt_handle.count(), 3)
 
         cur = self.kt_handle.cursor()
         self.assertTrue(cur.jump())
-        while cur.step():
+        while True:
             self.assertEqual(cur.get_key()[:3], 'abc')
             self.assertEqual(cur.get_value(), 'val')
 
@@ -291,18 +293,40 @@ class UnitTest(unittest.TestCase):
             self.assertEqual(pair[0][:3], 'abc')
             self.assertEqual(pair[1], 'val')
 
-            dict = cur.seize()
-            self.assertEqual(len(dict), 2)
-            self.assertEqual(dict['key'][:3], 'abc')
-            self.assertEqual(dict['value'], 'val')
+            self.assertTrue(cur.set_value('foo'))
+            self.assertEqual(cur.get_value(), 'foo')
 
-            self.assertTrue(cur.remove())
-            self.assertFalse(cur.get_key())
-            self.assertFalse(cur.get_value())
-            self.assertEqual(cur.get(), (False, False))
-            self.assertEqual(cur.seize(), False)
+            if pair[0] == 'abcd':
+                self.assertTrue(cur.remove())
+                break
+
+            if not cur.step():
+                break
 
         self.assertTrue(cur.delete())
+        self.assertEqual(self.kt_handle.count(), 2)
+
+        self.assertTrue(self.kt_handle.set('zabc', 'val'))
+        self.assertTrue(self.kt_handle.set('zabcd', 'val'))
+        self.assertTrue(self.kt_handle.set('zabcde', 'val'))
+        self.assertEqual(self.kt_handle.count(), 5)
+
+        cur = self.kt_handle.cursor()
+        self.assertTrue(cur.jump_back())
+        while True:
+            pair = cur.get()
+
+            if pair[0] == 'zabc':
+                dict = cur.seize()
+                self.assertEqual(len(dict), 2)
+                self.assertEqual(dict['key'][:4], 'zabc')
+                self.assertEqual(dict['value'], 'val')
+
+            if not cur.step_back():
+                break
+
+        self.assertTrue(cur.delete())
+        self.assertEqual(self.kt_handle.count(), 4)
 
 
 if __name__ == '__main__':
