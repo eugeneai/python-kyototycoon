@@ -18,16 +18,16 @@ except ImportError:
     import http.client as httplib
 
 try:
-    from percentcoding import quote, unquote
+    from urllib import quote as _quote
+    from urllib import quote as _quote_from_bytes
+    from urllib import unquote as unquote_to_bytes
 except ImportError:
-    try:
-        from urllib import quote as _quote
-        from urllib import unquote
-    except ImportError:
-        from urllib.parse import quote as _quote
-        from urllib.parse import unquote
+    from urllib.parse import quote as _quote
+    from urllib.parse import quote_from_bytes as _quote_from_bytes
+    from urllib.parse import unquote_to_bytes
 
-    quote = lambda s: _quote(s, safe='')
+quote = lambda s: _quote(s, safe='')
+quote_from_bytes = lambda s: _quote_from_bytes(s, safe='')
 
 try:
     import cPickle as pickle
@@ -51,14 +51,18 @@ KT_PACKER_JSON   = 2
 KT_PACKER_STRING = 3
 
 def _dict_to_tsv(dict):
-    return '\n'.join(quote(k) + '\t' + quote(str(v)) for (k, v) in dict.items())
+    lines = []
+    for k, v in dict.items():
+        quoted = quote_from_bytes(v) if isinstance(v, bytes) else quote(str(v))
+        lines.append(quote(k) + '\t' + quoted)
+    return '\n'.join(lines)
 
 def _content_type_decoder(content_type=''):
     ''' Select the appropriate decoding function to use based on the response headers. '''
     if content_type.endswith('colenc=B'):
         return base64.decodestring
     elif content_type.endswith('colenc=U'):
-        return unquote
+        return unquote_to_bytes
     else:
         return lambda x: x
 
@@ -66,8 +70,8 @@ def _tsv_to_dict(tsv_str, content_type=''):
     decode = _content_type_decoder(content_type)
     rv = {}
 
-    for row in tsv_str.split('\n'):
-        kv = row.split('\t')
+    for row in tsv_str.split(b'\n'):
+        kv = row.split(b'\t')
         if len(kv) == 2:
             rv[decode(kv[0])] = decode(kv[1])
     return rv
@@ -76,8 +80,8 @@ def _tsv_to_list(tsv_str, content_type=''):
     decode = _content_type_decoder(content_type)
     rv = []
 
-    for row in tsv_str.split('\n'):
-        kv = row.split('\t')
+    for row in tsv_str.split(b'\n'):
+        kv = row.split(b'\t')
         if len(kv) == 2:
             pair = (decode(kv[0]), decode(kv[1]))
             rv.append(pair)
@@ -95,7 +99,6 @@ class Cursor(object):
         self.err = kt_error.KyotoTycoonError()
         self.pack = self.protocol_handler.pack
         self.unpack = self.protocol_handler.unpack
-        self.pack_type = self.protocol_handler.pack_type
 
     def __enter__(self):
         return self
@@ -338,6 +341,7 @@ class Cursor(object):
 class ProtocolHandler(object):
     def __init__(self, pack_type=KT_PACKER_PICKLE, pickle_protocol=2):
         self.err = kt_error.KyotoTycoonError()
+        self.pack_type = pack_type
 
         if pack_type == KT_PACKER_PICKLE:
             self.pack = lambda data: pickle.dumps(data, pickle_protocol)
@@ -454,7 +458,7 @@ class ProtocolHandler(object):
             return False
 
         self.err.set_success()
-        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))['num'])
+        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def remove_bulk(self, keys, atomic, db):
         if not hasattr(keys, '__iter__'):
@@ -485,7 +489,7 @@ class ProtocolHandler(object):
             return False
 
         self.err.set_success()
-        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))['num'])
+        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def get_bulk(self, keys, atomic, db):
         if not hasattr(keys, '__iter__'):
@@ -518,7 +522,7 @@ class ProtocolHandler(object):
 
         rv = {}
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
-        n = res_dict.pop('num')
+        n = res_dict.pop(b'num')
 
         if n == '0':
             self.err.set_error(self.err.NOTFOUND)
@@ -526,7 +530,7 @@ class ProtocolHandler(object):
 
         for k, v in res_dict.items():
             if v is not None:
-                rv[k[1:]] = self.unpack(v)
+                rv[k.decode('UTF-8')[1:]] = self.unpack(v)
 
         self.err.set_success()
         return rv
@@ -590,8 +594,8 @@ class ProtocolHandler(object):
             return False
 
         res_list = _tsv_to_list(body, res.getheader('Content-Type', ''))
-        if len(res_list) == 0 or res_list[-1][0] != 'num':
-            self.err.set_err(self.err.EMISC)
+        if len(res_list) == 0 or res_list[-1][0] != b'num':
+            self.err.set_error(self.err.EMISC)
             return False
         num_key, num = res_list.pop()
         if num == '0':
@@ -599,7 +603,7 @@ class ProtocolHandler(object):
             return []
 
         for k, v in res_list:
-            rv.append(k[1:])
+            rv.append(k.decode('UTF-8')[1:])
 
         self.err.set_success()
         return rv
@@ -628,8 +632,8 @@ class ProtocolHandler(object):
 
         rv = []
         res_list = _tsv_to_list(body, res.getheader('Content-Type', ''))
-        if len(res_list) == 0 or res_list[-1][0] != 'num':
-            self.err.set_err(self.err.EMISC)
+        if len(res_list) == 0 or res_list[-1][0] != b'num':
+            self.err.set_error(self.err.EMISC)
             return False
         num_key, num = res_list.pop()
         if num == '0':
@@ -637,7 +641,7 @@ class ProtocolHandler(object):
             return []
 
         for k, v in res_list:
-            rv.append(k[1:])
+            rv.append(k.decode('UTF-8')[1:])
 
         self.err.set_success()
         return rv
@@ -647,9 +651,10 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        if db:
-            key = '/%s/%s' % (db, key)
         key = quote(key.encode('UTF-8'))
+        if db:
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+
         value = self.pack(value)
 
         self.err.set_success()
@@ -736,10 +741,10 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        if db:
-            key = '/%s/%s' % (db, key)
-
         key = quote(key.encode('UTF-8'))
+        if db:
+            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+
         value = self.pack(value)
         status = self._rest_put('replace', key, value, expire)
 
@@ -792,7 +797,7 @@ class ProtocolHandler(object):
             return None
 
         self.err.set_success()
-        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))['num'])
+        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def increment_double(self, key, delta, expire, db):
         if key is None:
@@ -814,7 +819,7 @@ class ProtocolHandler(object):
             return None
 
         self.err.set_success()
-        return float(_tsv_to_dict(body, res.getheader('Content-Type', ''))['num'])
+        return float(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def report(self):
         self.conn.request('GET', '/rpc/report')
@@ -823,8 +828,13 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.EMISC)
             return None
 
+        res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
+        status_dict = {}
+        for k, v in res_dict.items():
+            status_dict[k.decode('UTF-8')] = v.decode('UTF-8')
+
         self.err.set_success()
-        return _tsv_to_dict(body, res.getheader('Content-Type', ''))
+        return status_dict
 
     def status(self, db=None):
         url = '/rpc/status'
@@ -839,8 +849,13 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.EMISC)
             return None
 
+        res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
+        status_dict = {}
+        for k, v in res_dict.items():
+            status_dict[k.decode('UTF-8')] = v.decode('UTF-8')
+
         self.err.set_success()
-        return _tsv_to_dict(body, res.getheader('Content-Type', ''))
+        return status_dict
 
     def clear(self, db=None):
         url = '/rpc/clear'

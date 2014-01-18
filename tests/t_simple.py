@@ -221,6 +221,8 @@ class UnitTest(unittest.TestCase):
         report = self.kt_handle.report()
         assert report is not None
 
+        self.assertTrue(int(report['serv_conn_count']) > 0)
+
     def test_status(self):
         self.assertTrue(self.kt_handle.clear())
         status = None
@@ -256,7 +258,7 @@ class UnitTest(unittest.TestCase):
         list = self.kt_handle.match_prefix('abcd')
         self.assertEqual(len(list), 5)
         list = self.kt_handle.match_prefix('abc', 1)
-        self.assertEqual(list[0], 'abc')
+        self.assertEqual(list[0][:3], 'abc')
 
     def test_match_regex(self):
         self.assertTrue(self.kt_handle.clear())

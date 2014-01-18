@@ -15,18 +15,15 @@ class UnitTest(unittest.TestCase):
 
     def test_packer(self):
         stri = 'hello world sir'
-        buf = self.kt_core._pickle_packer(stri)
-        if type(stri) is str:
-            assert buf == stri
-        else:
-            assert buf != stri
-        ret = self.kt_core._pickle_unpacker(buf)
+        buf = self.kt_core.pack(stri)
+        assert buf != stri
+        ret = self.kt_core.unpack(buf)
         self.assertEqual(stri, ret)
 
         num = 777
-        buf = self.kt_core._pickle_packer(num)
+        buf = self.kt_core.pack(num)
         assert buf != num
-        ret = self.kt_core._pickle_unpacker(buf)
+        ret = self.kt_core.unpack(buf)
         self.assertEqual(type(num), type(ret))
         self.assertEqual(num, ret)
 
