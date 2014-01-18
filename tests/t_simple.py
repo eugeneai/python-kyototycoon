@@ -273,5 +273,36 @@ class UnitTest(unittest.TestCase):
         list = self.kt_handle.match_regex('e$')
         self.assertEqual(len(list), 1)
 
+    def test_cursor(self):
+        self.assertTrue(self.kt_handle.clear())
+        self.assertTrue(self.kt_handle.set('abc', 'val'))
+        self.assertTrue(self.kt_handle.set('abcd', 'val'))
+        self.assertTrue(self.kt_handle.set('abcde', 'val'))
+
+        cur = self.kt_handle.cursor()
+        self.assertTrue(cur.jump())
+        while cur.step():
+            self.assertEqual(cur.get_key()[:3], 'abc')
+            self.assertEqual(cur.get_value(), 'val')
+
+            pair = cur.get()
+            self.assertEqual(len(pair), 2)
+            self.assertEqual(pair[0][:3], 'abc')
+            self.assertEqual(pair[1], 'val')
+
+            dict = cur.seize()
+            self.assertEqual(len(dict), 2)
+            self.assertEqual(dict['key'][:3], 'abc')
+            self.assertEqual(dict['value'], 'val')
+
+            self.assertTrue(cur.remove())
+            self.assertFalse(cur.get_key())
+            self.assertFalse(cur.get_value())
+            self.assertEqual(cur.get(), (False, False))
+            self.assertEqual(cur.seize(), False)
+
+        self.assertTrue(cur.delete())
+
+
 if __name__ == '__main__':
     unittest.main()

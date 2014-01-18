@@ -110,8 +110,7 @@ class Cursor(object):
     def jump(self, key=None, db=None):
         path = '/rpc/cur_jump'
         if db:
-            db = quote(db)
-            path += '?DB=' + db
+            path = '%s?DB=%s' % (path, quote(db.encode('UTF-8')))
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
@@ -133,8 +132,7 @@ class Cursor(object):
     def jump_back(self, key=None, db=None):
         path = '/rpc/cur_jump_back'
         if db:
-            db = quote(db)
-            path += '?DB=' + db
+            path = '%s?DB=%s' % (path, quote(db.encode('UTF-8')))
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
@@ -248,7 +246,7 @@ class Cursor(object):
             return False
 
         self.err.set_success()
-        return _tsv_to_dict(body, res.getheader('Content-Type', ''))['key']
+        return _tsv_to_dict(body, res.getheader('Content-Type', ''))[b'key'].decode('UTF-8')
 
     def get_value(self, step=False):
         path = '/rpc/cur_get_value'
@@ -268,7 +266,7 @@ class Cursor(object):
             return False
 
         self.err.set_success()
-        return self.unpack(_tsv_to_dict(body, res.getheader('Content-Type', ''))['value'])
+        return self.unpack(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'value'])
 
     def get(self, step=False):
         path = '/rpc/cur_get'
@@ -291,10 +289,11 @@ class Cursor(object):
             self.err.set_error(self.err.EMISC)
             return False, False
 
-        self.err.set_success()
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
-        key = res_dict['key']
-        value = self.unpack(res_dict['value'])
+        key = res_dict[b'key'].decode('UTF-8')
+        value = self.unpack(res_dict[b'value'])
+
+        self.err.set_success()
         return key, value
 
     def seize(self):
@@ -312,11 +311,13 @@ class Cursor(object):
             self.err.set_error(self.err.EMISC)
             return False
 
-        self.err.set_success()
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
-        res_dict['key'] = res_dict['key']
-        res_dict['value'] = self.unpack(res_dict['value'])
-        return res_dict
+        seize_dict = {}
+        seize_dict['key'] = res_dict[b'key'].decode('UTF-8')
+        seize_dict['value'] = self.unpack(res_dict[b'value'])
+
+        self.err.set_success()
+        return seize_dict
 
     def delete(self):
         path = '/rpc/cur_delete'
@@ -829,12 +830,12 @@ class ProtocolHandler(object):
             return None
 
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
-        status_dict = {}
+        report_dict = {}
         for k, v in res_dict.items():
-            status_dict[k.decode('UTF-8')] = v.decode('UTF-8')
+            report_dict[k.decode('UTF-8')] = v.decode('UTF-8')
 
         self.err.set_success()
-        return status_dict
+        return report_dict
 
     def status(self, db=None):
         url = '/rpc/status'
