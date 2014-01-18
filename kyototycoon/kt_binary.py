@@ -99,6 +99,10 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_SET_BULK, 0, len(kv_dict))]
 
         for key, value in kv_dict.items():
+            if key is None:
+                self.err.set_error(self.err.LOGIC)
+                return 0
+
             key = key.encode('UTF-8')
             value = self.pack(value)
 
@@ -114,8 +118,11 @@ class ProtocolHandler(object):
             return False
 
         num_items, = struct.unpack('!I', self._read(4))
+        if num_items > 0:
+            self.err.set_success()
+        else:
+            self.err.set_error(self.err.NOTFOUND)
 
-        self.err.set_success()
         return num_items
 
     def remove_bulk(self, keys, atomic, db):
@@ -129,6 +136,10 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_REMOVE_BULK, 0, len(keys))]
 
         for key in keys:
+            if key is None:
+                self.err.set_error(self.err.LOGIC)
+                return 0
+
             key = key.encode('UTF-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
@@ -141,8 +152,11 @@ class ProtocolHandler(object):
             return False
 
         num_items, = struct.unpack('!I', self._read(4))
+        if num_items > 0:
+            self.err.set_success()
+        else:
+            self.err.set_error(self.err.NOTFOUND)
 
-        self.err.set_success()
         return num_items
 
     def get_bulk(self, keys, atomic, db):
@@ -156,6 +170,10 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_GET_BULK, 0, len(keys))]
 
         for key in keys:
+            if key is None:
+                self.err.set_error(self.err.LOGIC)
+                return 0
+
             key = key.encode('UTF-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
@@ -174,6 +192,12 @@ class ProtocolHandler(object):
             key = self._read(key_length)
             value = self._read(value_length)
             items[key.decode('UTF-8')] = self.unpack(value)
+
+        if num_items > 0:
+            self.err.set_success()
+        else:
+            self.err.set_error(self.err.NOTFOUND)
+
         return items
 
     def get_int(self, key, db=None):

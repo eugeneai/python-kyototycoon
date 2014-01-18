@@ -8,10 +8,11 @@
 import config
 import unittest
 from kyototycoon import KyotoTycoon
+from kyototycoon.kt_http import KT_PACKER_PICKLE
 
 class UnitTest(unittest.TestCase):
     def setUp(self):
-        self.kt_handle = KyotoTycoon()
+        self.kt_handle = KyotoTycoon(binary=False, pack_type=KT_PACKER_PICKLE)
         self.kt_handle.open()
         self.LARGE_KEY_LEN = 8000
 

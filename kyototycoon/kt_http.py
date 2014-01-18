@@ -489,8 +489,13 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.EMISC)
             return False
 
-        self.err.set_success()
-        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
+        count = int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
+        if count > 0:
+            self.err.set_success()
+        else:
+            self.err.set_error(self.err.NOTFOUND)
+
+        return count
 
     def get_bulk(self, keys, atomic, db):
         if not hasattr(keys, '__iter__'):
