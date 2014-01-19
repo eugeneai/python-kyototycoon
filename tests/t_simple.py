@@ -312,7 +312,7 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(self.kt_handle.count(), 5)
 
         cur = self.kt_handle.cursor()
-        self.assertTrue(cur.jump_back())
+        self.assertTrue(cur.jump(key='zabc'))
         while True:
             pair = cur.get()
 
@@ -322,7 +322,7 @@ class UnitTest(unittest.TestCase):
                 self.assertEqual(dict['key'][:4], 'zabc')
                 self.assertEqual(dict['value'], 'val')
 
-            if not cur.step_back():
+            if not cur.step():
                 break
 
         self.assertTrue(cur.delete())

@@ -110,12 +110,13 @@ class Cursor(object):
     def jump(self, key=None, db=None):
         path = '/rpc/cur_jump'
         if db:
-            path = '%s?DB=%s' % (path, quote(db.encode('UTF-8')))
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            path = '%s?DB=%s' % (path, db)
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
         if key:
-            request_dict['key'] = key
+            request_dict['key'] = key.encode('UTF-8')
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body,
@@ -132,12 +133,13 @@ class Cursor(object):
     def jump_back(self, key=None, db=None):
         path = '/rpc/cur_jump_back'
         if db:
-            path = '%s?DB=%s' % (path, quote(db.encode('UTF-8')))
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            path = '%s?DB=%s' % (path, db)
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
         if key:
-            request_dict['key'] = key
+            request_dict['key'] = key.encode('UTF-8')
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body,
@@ -412,7 +414,8 @@ class ProtocolHandler(object):
 
         key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            key = '/%s/%s' % (db, key)
 
         self.conn.request('GET', key)
         res, body = self.getresponse()
@@ -548,7 +551,8 @@ class ProtocolHandler(object):
 
         key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            key = '/%s/%s' % (db, key)
 
         self.conn.request('GET', key)
 
@@ -659,7 +663,8 @@ class ProtocolHandler(object):
 
         key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
 
@@ -680,7 +685,8 @@ class ProtocolHandler(object):
 
         key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
         status = self._rest_put('add', key, value, expire)
@@ -730,7 +736,8 @@ class ProtocolHandler(object):
 
         key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            key = '/%s/%s' % (db, key)
 
         self.conn.request('DELETE', key)
 
@@ -749,7 +756,8 @@ class ProtocolHandler(object):
 
         key = quote(key.encode('UTF-8'))
         if db:
-            key = '/%s/%s' % (quote(db.encode('UTF-8')), key)
+            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
         status = self._rest_put('replace', key, value, expire)
