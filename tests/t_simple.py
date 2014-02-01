@@ -137,6 +137,14 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.set('k3', 777))
         self.assertFalse(self.kt_handle.append('k3', 111))
 
+        self.assertTrue(self.kt_handle.set('k4', b'abc'))
+        self.assertTrue(self.kt_handle.append('k4', 'abc'))
+        self.assertEqual(self.kt_handle.get('k4'), b'abcabc')
+
+        self.assertTrue(self.kt_handle.set('k5', 'abc'))
+        self.assertTrue(self.kt_handle.append('k5', b'abc'))
+        self.assertEqual(self.kt_handle.get('k5'), 'abcabc')
+
     def test_add(self):
         self.assertTrue(self.kt_handle.clear())
         self.assertTrue(self.kt_handle.set('stewie', 'griffin'))

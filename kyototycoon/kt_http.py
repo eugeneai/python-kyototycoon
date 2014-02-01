@@ -9,6 +9,7 @@
 import base64
 import struct
 import time
+import sys
 
 from . import kt_error
 
@@ -42,7 +43,7 @@ except ImportError:
 # Stick with URL encoding for now. Eventually run a benchmark
 # to evaluate what the most approariate encoding algorithm is.
 KT_HTTP_HEADER = {
-  'Content-Type' : 'text/tab-separated-values; colenc=U',
+    'Content-Type' : 'text/tab-separated-values; colenc=U',
 }
 
 KT_PACKER_CUSTOM = 0
@@ -108,6 +109,8 @@ class Cursor(object):
         self.delete()
 
     def jump(self, key=None, db=None):
+        '''Jump the cursor to a record (first record if "None") for forward scan.'''
+
         path = '/rpc/cur_jump'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
@@ -119,8 +122,7 @@ class Cursor(object):
             request_dict['key'] = key.encode('UTF-8')
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -131,6 +133,8 @@ class Cursor(object):
         return True
 
     def jump_back(self, key=None, db=None):
+        '''Jump the cursor to a record (last record if "None") for forward scan.'''
+
         path = '/rpc/cur_jump_back'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
@@ -142,8 +146,7 @@ class Cursor(object):
             request_dict['key'] = key.encode('UTF-8')
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -154,14 +157,15 @@ class Cursor(object):
         return True
 
     def step(self):
+        '''Step the cursor to the next record.'''
+
         path = '/rpc/cur_step'
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -172,14 +176,15 @@ class Cursor(object):
         return True
 
     def step_back(self):
+        '''Step the cursor to the previous record.'''
+
         path = '/rpc/cur_step_back'
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -190,6 +195,8 @@ class Cursor(object):
         return True
 
     def set_value(self, value, step=False, xt=None):
+        '''Set the value for the current record.'''
+
         path = '/rpc/cur_set_value'
 
         request_dict = {}
@@ -201,8 +208,7 @@ class Cursor(object):
             request_dict['xt'] = xt
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -213,14 +219,15 @@ class Cursor(object):
         return True
 
     def remove(self):
+        '''Remove the current record.'''
+
         path = '/rpc/cur_remove'
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -231,6 +238,8 @@ class Cursor(object):
         return True
 
     def get_key(self, step=False):
+        '''Get the key for the current record.'''
+
         path = '/rpc/cur_get_key'
 
         request_dict = {}
@@ -239,8 +248,7 @@ class Cursor(object):
             request_dict['step'] = True
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -251,6 +259,8 @@ class Cursor(object):
         return _tsv_to_dict(body, res.getheader('Content-Type', ''))[b'key'].decode('UTF-8')
 
     def get_value(self, step=False):
+        '''Get the value for the current record.'''
+
         path = '/rpc/cur_get_value'
 
         request_dict = {}
@@ -259,8 +269,7 @@ class Cursor(object):
             request_dict['step'] = True
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -271,6 +280,8 @@ class Cursor(object):
         return self.unpack(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'value'])
 
     def get(self, step=False):
+        '''Get a (key,value) pair for the current record.'''
+
         path = '/rpc/cur_get'
 
         request_dict = {}
@@ -279,8 +290,7 @@ class Cursor(object):
             request_dict['step'] = True
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status == 404:
@@ -299,14 +309,15 @@ class Cursor(object):
         return key, value
 
     def seize(self):
+        '''Get a (key,value) pair for the current record, and remove it atomically.'''
+
         path = '/rpc/cur_seize'
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -322,14 +333,15 @@ class Cursor(object):
         return seize_dict
 
     def delete(self):
+        '''Delete the cursor.'''
+
         path = '/rpc/cur_delete'
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
 
         request_body = _dict_to_tsv(request_dict)
-        self.protocol_handler.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
@@ -368,8 +380,8 @@ class ProtocolHandler(object):
         return Cursor(self)
 
     def open(self, host, port, timeout):
-        # Save connection parameters so the connection can be re-established
-        # on "Connection: close" response.
+        # Save connection parameters so the connection can be
+        # re-established on a "Connection: close" response...
         self.host = host
         self.port = port
         self.timeout = timeout
@@ -453,8 +465,7 @@ class ProtocolHandler(object):
             v = quote(self.pack(v))
             request_body += '_' + k + '\t' + v + '\n'
 
-        self.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -484,8 +495,7 @@ class ProtocolHandler(object):
         if db:
             db = quote(db)
             path += '?DB=' + db
-        self.conn.request('POST', path, body=request_header + request_body,
-                          headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_header + request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -521,8 +531,7 @@ class ProtocolHandler(object):
         if db:
             db = quote(db)
             path += '?DB=' + db
-        self.conn.request('POST', path, body=request_header + request_body,
-                          headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_header + request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -595,8 +604,7 @@ class ProtocolHandler(object):
             request_dict['DB'] = db
 
         request_body = _dict_to_tsv(request_dict)
-        self.conn.request('POST', '/rpc/match_prefix',
-                          body=request_body, headers=KT_HTTP_HEADER)
+        self.conn.request('POST', '/rpc/match_prefix', body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -632,8 +640,7 @@ class ProtocolHandler(object):
             request_dict['max'] = max
 
         request_body = _dict_to_tsv(request_dict)
-        self.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -718,8 +725,7 @@ class ProtocolHandler(object):
 
         request_body = _dict_to_tsv(request_dict)
 
-        self.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -773,20 +779,38 @@ class ProtocolHandler(object):
         self.err.set_error(self.err.LOGIC)
         if key is None:
             return False
-        elif not isinstance(value, str):
+
+        # Simultaneous support for Python 2/3 makes this cumbersome...
+        if sys.version_info[0] >= 3:
+            bytes_type = bytes
+            unicode_type = str
+        else:
+            bytes_type = str
+            unicode_type = unicode
+
+        if (not isinstance(value, bytes_type) and
+            not isinstance(value, unicode_type)):
             return False
 
-        # Only handle Pickle for now.
-        if self.pack_type == KT_PACKER_PICKLE:
-            data = self.get(key)
-            if data is None:
-                data = value
-            else:
-                data = data + value
+        data = self.get(key)
+        if data is None:
+            data = type(value)()
 
-            if self.set(key, data, expire, db) is True:
-                self.err.set_success()
-                return True
+        if (not isinstance(data, bytes_type) and
+            not isinstance(data, unicode_type)):
+            return False
+
+        if type(data) != type(value):
+            if isinstance(data, bytes_type):
+                value = value.encode('UTF-8')
+            else:
+                value = value.decode('UTF-8')
+
+        data += value
+
+        if self.set(key, data, expire, db) is True:
+            self.err.set_success()
+            return True
 
         self.err.set_error(self.err.EMISC)
         return False
@@ -802,8 +826,7 @@ class ProtocolHandler(object):
 
         delta = int(delta)
         request_body = 'key\t%s\nnum\t%d\n' % (key, delta)
-        self.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -824,8 +847,7 @@ class ProtocolHandler(object):
 
         delta = float(delta)
         request_body = 'key\t%s\nnum\t%f\n' % (key, delta)
-        self.conn.request('POST', path, body=request_body,
-                          headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
