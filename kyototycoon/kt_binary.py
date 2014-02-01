@@ -33,6 +33,7 @@ KT_PACKER_STRING = 3
 MB_SET_BULK = 0xb8
 MB_GET_BULK = 0xba
 MB_REMOVE_BULK = 0xb9
+MB_PLAY_SCRIPT = 0xb4
 
 # Maximum signed 64bit integer...
 DEFAULT_EXPIRE = 0x7fffffffffffffff
@@ -101,7 +102,7 @@ class ProtocolHandler(object):
         for key, value in kv_dict.items():
             if key is None:
                 self.err.set_error(self.err.LOGIC)
-                return 0
+                return False
 
             key = key.encode('utf-8')
             value = self.pack(value)
@@ -128,7 +129,7 @@ class ProtocolHandler(object):
     def remove_bulk(self, keys, atomic, db):
         if not hasattr(keys, '__iter__'):
             self.err.set_error(self.err.LOGIC)
-            return 0
+            return False
 
         if db is None:
             db = 0
@@ -138,7 +139,7 @@ class ProtocolHandler(object):
         for key in keys:
             if key is None:
                 self.err.set_error(self.err.LOGIC)
-                return 0
+                return False
 
             key = key.encode('utf-8')
             request.append(struct.pack('!HI', db, len(key)))
@@ -172,7 +173,7 @@ class ProtocolHandler(object):
         for key in keys:
             if key is None:
                 self.err.set_error(self.err.LOGIC)
-                return 0
+                return False
 
             key = key.encode('utf-8')
             request.append(struct.pack('!HI', db, len(key)))
@@ -256,6 +257,48 @@ class ProtocolHandler(object):
 
     def size(self, db=None):
         raise NotImplementedError('supported under the HTTP procotol only')
+
+    def play_script(self, name, kv_dict=None):
+        if kv_dict and not isinstance(kv_dict, dict):
+            return False
+
+        if kv_dict is None:
+            kv_dict = {}
+
+        if name is None:
+            self.err.set_error(self.err.LOGIC)
+            return False
+
+        name = name.encode('utf-8')
+        request = [struct.pack('!BIII', MB_PLAY_SCRIPT, 0, len(name), len(kv_dict)), name]
+
+        for key, value in kv_dict.items():
+            if not isinstance(value, bytes):
+                raise ValueError('value must be a byte sequence')
+
+            key = key.encode('utf-8')
+
+            request.append(struct.pack('!II', len(key), len(value)))
+            request.append(key)
+            request.append(value)
+
+        self._write(b''.join(request))
+
+        magic, = struct.unpack('!B', self._read(1))
+        if magic != MB_PLAY_SCRIPT:
+            self.err.set_error(self.err.INTERNAL)
+            return False
+
+        num_items, = struct.unpack('!I', self._read(4))
+        items = {}
+        for i in range(num_items):
+            key_length, value_length = struct.unpack('!II', self._read(8))
+            key = self._read(key_length)
+            value = self._read(value_length)
+            items[key.decode('utf-8')] = value
+
+        self.err.set_success()
+        return items
 
     def _write(self, data):
         self.socket.sendall(data)

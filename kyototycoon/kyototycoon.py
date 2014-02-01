@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 #
 # Copyright 2011, Toru Maesaka
 #
@@ -146,5 +147,16 @@ class KyotoTycoon(object):
         '''Obtain a new (uninitialized) record cursor.'''
 
         return self.core.cursor()
+
+    def play_script(self, name, kv_dict=None):
+        '''
+        Call a procedure of the scripting language extension.
+
+        Because the input/output of server-side scripts may use a mix of formats, and unlike all
+        other methods, no implicit packing/unpacking is done to either input or output values.
+
+        '''
+
+        return self.core.play_script(name, kv_dict)
 
 # vim: set expandtab ts=4 sw=4

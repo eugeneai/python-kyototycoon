@@ -478,7 +478,7 @@ class ProtocolHandler(object):
     def remove_bulk(self, keys, atomic, db):
         if not hasattr(keys, '__iter__'):
             self.err.set_error(self.err.LOGIC)
-            return 0
+            return False
 
         request_header = ''
         if atomic:
@@ -489,7 +489,7 @@ class ProtocolHandler(object):
             request_body += '_' + quote(key) + '\t\n'
         if len(request_body) < 1:
             self.err.set_error(self.err.LOGIC)
-            return 0
+            return False
 
         path = '/rpc/remove_bulk'
         if db:
@@ -920,6 +920,45 @@ class ProtocolHandler(object):
         if st is None:
             return None
         return int(st['size'])
+
+    def play_script(self, name, kv_dict=None):
+        if kv_dict and not isinstance(kv_dict, dict):
+            return False
+
+        if kv_dict is None:
+            kv_dict = {}
+
+        if name is None:
+            self.err.set_error(self.err.LOGIC)
+            return False
+
+        path = '/rpc/play_script?name=' + quote(name)
+        request_body = ''
+
+        for k, v in kv_dict.items():
+            if not isinstance(v, bytes):
+                raise ValueError('value must be a byte sequence')
+
+            k = quote(k.encode('utf-8'))
+            v = quote(v)
+            request_body += '_' + k + '\t' + v + '\n'
+
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
+
+        res, body = self.getresponse()
+        if res.status != 200:
+            self.err.set_error(self.err.LOGIC)
+            return None
+
+        rv = {}
+        res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
+
+        for k, v in res_dict.items():
+            if v is not None:
+                rv[k.decode('utf-8')[1:]] = v
+
+        self.err.set_success()
+        return rv
 
     def _rest_put(self, operation, key, value, expire):
         headers = { 'X-Kt-Mode' : operation }
