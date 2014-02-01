@@ -49,12 +49,6 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.set('https://github.com', 'url2'))
         self.assertTrue(self.kt_handle.set('https://github.com/blog/', 'url3'))
 
-        self.assertFalse(self.kt_handle.set(None, 'value'))
-        self.assertEqual(error.code(), error.LOGIC)
-
-        self.assertFalse(self.kt_handle.get(None))
-        self.assertEqual(error.code(), error.LOGIC)
-
         self.assertEqual(self.kt_handle.get('non_existent'), None)
         self.assertEqual(error.code(), error.NOTFOUND)
 
@@ -76,8 +70,6 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(error.code(), error.SUCCESS)
         self.assertTrue(self.kt_handle.remove('deleteable key'))
         self.assertEqual(error.code(), error.SUCCESS)
-        self.assertFalse(self.kt_handle.remove(None))
-        self.assertEqual(error.code(), error.LOGIC)
 
     def test_set_bulk(self):
         self.assertTrue(self.kt_handle_http.clear())

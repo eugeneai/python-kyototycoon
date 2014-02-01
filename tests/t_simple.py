@@ -45,12 +45,6 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.set('https://github.com', 'url2'))
         self.assertTrue(self.kt_handle.set('https://github.com/blog/', 'url3'))
 
-        self.assertFalse(self.kt_handle.set(None, 'value'))
-        self.assertEqual(error.code(), error.LOGIC)
-
-        self.assertFalse(self.kt_handle.get(None))
-        self.assertEqual(error.code(), error.LOGIC)
-
         self.assertEqual(self.kt_handle.get('non_existent'), None)
         self.assertEqual(error.code(), error.NOTFOUND)
 
@@ -95,8 +89,6 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(error.code(), error.SUCCESS)
         self.assertTrue(self.kt_handle.remove('deleteable key'))
         self.assertEqual(error.code(), error.SUCCESS)
-        self.assertFalse(self.kt_handle.remove(None))
-        self.assertEqual(error.code(), error.LOGIC)
 
     def test_replace(self):
         self.assertTrue(self.kt_handle.clear())
@@ -113,8 +105,6 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(error.code(), error.SUCCESS)
         self.assertEqual(self.kt_handle.get('apple'), 'apfel')
         self.assertEqual(error.code(), error.SUCCESS)
-        self.assertFalse(self.kt_handle.replace(None, 'value'))
-        self.assertEqual(error.code(), error.LOGIC)
 
         self.assertTrue(self.kt_handle.replace('apple', 212))
         self.assertEqual(error.code(), error.SUCCESS)
@@ -135,7 +125,6 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(self.kt_handle.get('k2'), 'new val')
 
         self.assertTrue(self.kt_handle.set('k3', 777))
-        self.assertFalse(self.kt_handle.append('k3', 111))
 
         self.assertTrue(self.kt_handle.set('k4', b'abc'))
         self.assertTrue(self.kt_handle.append('k4', 'abc'))
@@ -157,7 +146,6 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.add('lois', 'griffin'))
         self.assertTrue(self.kt_handle.add('seth', 'green'))
         self.assertTrue(self.kt_handle.add('nyc', 'new york city'))
-        self.assertFalse(self.kt_handle.add(None, 'value'))
 
         self.assertTrue(self.kt_handle.add('number', 111))
         self.assertEqual(self.kt_handle.get('number'), 111)

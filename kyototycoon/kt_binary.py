@@ -46,15 +46,12 @@ class ProtocolHandler(object):
         if pack_type == KT_PACKER_PICKLE:
             self.pack = lambda data: pickle.dumps(data, pickle_protocol)
             self.unpack = lambda data: pickle.loads(data)
-
         elif pack_type == KT_PACKER_JSON:
             self.pack = lambda data: json.dumps(data, separators=(',',':')).encode('utf-8')
             self.unpack = lambda data: json.loads(data.decode('utf-8'))
-
         elif pack_type == KT_PACKER_STRING:
             self.pack = lambda data: data.encode('utf-8')
             self.unpack = lambda data: data.decode('utf-8')
-
         else:
             raise Exception('unsupported pack type specified')
 
@@ -74,9 +71,6 @@ class ProtocolHandler(object):
         return True
 
     def get(self, key, db=None):
-        if key is None:
-            return False
-
         values = self.get_bulk([key], True, db)
         if not values:
             return None
@@ -84,12 +78,9 @@ class ProtocolHandler(object):
         return values[key]
 
     def set_bulk(self, kv_dict, expire, atomic, db):
-        if not isinstance(kv_dict, dict):
-            return False
-
-        if len(kv_dict) < 1:
+        if isinstance(kv_dict, dict) and len(kv_dict) < 1:
             self.err.set_error(self.err.LOGIC)
-            return False
+            return 0
 
         if db is None:
             db = 0
@@ -100,10 +91,6 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_SET_BULK, 0, len(kv_dict))]
 
         for key, value in kv_dict.items():
-            if key is None:
-                self.err.set_error(self.err.LOGIC)
-                return False
-
             key = key.encode('utf-8')
             value = self.pack(value)
 
@@ -119,17 +106,14 @@ class ProtocolHandler(object):
             return False
 
         num_items, = struct.unpack('!I', self._read(4))
-        if num_items > 0:
-            self.err.set_success()
-        else:
-            self.err.set_error(self.err.NOTFOUND)
 
+        self.err.set_success()
         return num_items
 
     def remove_bulk(self, keys, atomic, db):
-        if not hasattr(keys, '__iter__'):
+        if len(keys) < 1:
             self.err.set_error(self.err.LOGIC)
-            return False
+            return 0
 
         if db is None:
             db = 0
@@ -137,10 +121,6 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_REMOVE_BULK, 0, len(keys))]
 
         for key in keys:
-            if key is None:
-                self.err.set_error(self.err.LOGIC)
-                return False
-
             key = key.encode('utf-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
@@ -161,9 +141,9 @@ class ProtocolHandler(object):
         return num_items
 
     def get_bulk(self, keys, atomic, db):
-        if not hasattr(keys, '__iter__'):
+        if len(keys) < 1:
             self.err.set_error(self.err.LOGIC)
-            return None
+            return {}
 
         if db is None:
             db = 0
@@ -171,10 +151,6 @@ class ProtocolHandler(object):
         request = [struct.pack('!BII', MB_GET_BULK, 0, len(keys))]
 
         for key in keys:
-            if key is None:
-                self.err.set_error(self.err.LOGIC)
-                return False
-
             key = key.encode('utf-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
@@ -224,10 +200,6 @@ class ProtocolHandler(object):
         raise NotImplementedError('supported under the HTTP procotol only')
 
     def remove(self, key, db):
-        if key is None:
-            self.err.set_error(self.err.LOGIC)
-            return False
-
         numitems = self.remove_bulk([key], True, db)
         return numitems > 0
 
@@ -259,15 +231,8 @@ class ProtocolHandler(object):
         raise NotImplementedError('supported under the HTTP procotol only')
 
     def play_script(self, name, kv_dict=None):
-        if kv_dict and not isinstance(kv_dict, dict):
-            return False
-
         if kv_dict is None:
             kv_dict = {}
-
-        if name is None:
-            self.err.set_error(self.err.LOGIC)
-            return False
 
         name = name.encode('utf-8')
         request = [struct.pack('!BIII', MB_PLAY_SCRIPT, 0, len(name), len(kv_dict)), name]

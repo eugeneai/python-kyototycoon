@@ -35,7 +35,7 @@ class KyotoTycoonError(object):
         INTERNAL: "Internal Error",
         NETWORK: "Network Error",
         NOTFOUND: "Record Not Found",
-        EMISC: "Miscellenious Error",
+        EMISC: "Miscellaneous Error",
     }
 
     def __init__(self):
