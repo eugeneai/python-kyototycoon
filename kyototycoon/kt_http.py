@@ -113,13 +113,13 @@ class Cursor(object):
 
         path = '/rpc/cur_jump'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path = '%s?DB=%s' % (path, db)
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
         if key:
-            request_dict['key'] = key.encode('UTF-8')
+            request_dict['key'] = key.encode('utf-8')
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -137,13 +137,13 @@ class Cursor(object):
 
         path = '/rpc/cur_jump_back'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path = '%s?DB=%s' % (path, db)
 
         request_dict = {}
         request_dict['CUR'] = self.cursor_id
         if key:
-            request_dict['key'] = key.encode('UTF-8')
+            request_dict['key'] = key.encode('utf-8')
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -256,7 +256,7 @@ class Cursor(object):
             return False
 
         self.err.set_success()
-        return _tsv_to_dict(body, res.getheader('Content-Type', ''))[b'key'].decode('UTF-8')
+        return _tsv_to_dict(body, res.getheader('Content-Type', ''))[b'key'].decode('utf-8')
 
     def get_value(self, step=False):
         '''Get the value for the current record.'''
@@ -302,7 +302,7 @@ class Cursor(object):
             return False, False
 
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
-        key = res_dict[b'key'].decode('UTF-8')
+        key = res_dict[b'key'].decode('utf-8')
         value = self.unpack(res_dict[b'value'])
 
         self.err.set_success()
@@ -326,7 +326,7 @@ class Cursor(object):
 
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         seize_dict = {}
-        seize_dict['key'] = res_dict[b'key'].decode('UTF-8')
+        seize_dict['key'] = res_dict[b'key'].decode('utf-8')
         seize_dict['value'] = self.unpack(res_dict[b'value'])
 
         self.err.set_success()
@@ -363,12 +363,12 @@ class ProtocolHandler(object):
             self.unpack = lambda data: pickle.loads(data)
 
         elif pack_type == KT_PACKER_JSON:
-            self.pack = lambda data: json.dumps(data).encode('UTF-8')
-            self.unpack = lambda data: json.loads(data.decode('UTF-8'))
+            self.pack = lambda data: json.dumps(data, separators=(',',':')).encode('utf-8')
+            self.unpack = lambda data: json.loads(data.decode('utf-8'))
 
         elif pack_type == KT_PACKER_STRING:
-            self.pack = lambda data: data.encode('UTF-8')
-            self.unpack = lambda data: data.decode('UTF-8')
+            self.pack = lambda data: data.encode('utf-8')
+            self.unpack = lambda data: data.decode('utf-8')
 
         else:
             raise Exception('unsupported pack type specified')
@@ -424,9 +424,9 @@ class ProtocolHandler(object):
         if key is None:
             return False
 
-        key = quote(key.encode('UTF-8'))
+        key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         self.conn.request('GET', key)
@@ -548,7 +548,7 @@ class ProtocolHandler(object):
 
         for k, v in res_dict.items():
             if v is not None:
-                rv[k.decode('UTF-8')[1:]] = self.unpack(v)
+                rv[k.decode('utf-8')[1:]] = self.unpack(v)
 
         self.err.set_success()
         return rv
@@ -558,9 +558,9 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        key = quote(key.encode('UTF-8'))
+        key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         self.conn.request('GET', key)
@@ -621,7 +621,7 @@ class ProtocolHandler(object):
             return []
 
         for k, v in res_list:
-            rv.append(k.decode('UTF-8')[1:])
+            rv.append(k.decode('utf-8')[1:])
 
         self.err.set_success()
         return rv
@@ -658,7 +658,7 @@ class ProtocolHandler(object):
             return []
 
         for k, v in res_list:
-            rv.append(k.decode('UTF-8')[1:])
+            rv.append(k.decode('utf-8')[1:])
 
         self.err.set_success()
         return rv
@@ -668,9 +668,9 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        key = quote(key.encode('UTF-8'))
+        key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
@@ -690,9 +690,9 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        key = quote(key.encode('UTF-8'))
+        key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
@@ -740,9 +740,9 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        key = quote(key.encode('UTF-8'))
+        key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         self.conn.request('DELETE', key)
@@ -760,9 +760,9 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return False
 
-        key = quote(key.encode('UTF-8'))
+        key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('UTF-8'))
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
@@ -802,9 +802,9 @@ class ProtocolHandler(object):
 
         if type(data) != type(value):
             if isinstance(data, bytes_type):
-                value = value.encode('UTF-8')
+                value = value.encode('utf-8')
             else:
-                value = value.decode('UTF-8')
+                value = value.decode('utf-8')
 
         data += value
 
@@ -867,7 +867,7 @@ class ProtocolHandler(object):
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         report_dict = {}
         for k, v in res_dict.items():
-            report_dict[k.decode('UTF-8')] = v.decode('UTF-8')
+            report_dict[k.decode('utf-8')] = v.decode('utf-8')
 
         self.err.set_success()
         return report_dict
@@ -888,7 +888,7 @@ class ProtocolHandler(object):
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         status_dict = {}
         for k, v in res_dict.items():
-            status_dict[k.decode('UTF-8')] = v.decode('UTF-8')
+            status_dict[k.decode('utf-8')] = v.decode('utf-8')
 
         self.err.set_success()
         return status_dict

@@ -47,12 +47,12 @@ class ProtocolHandler(object):
             self.unpack = lambda data: pickle.loads(data)
 
         elif pack_type == KT_PACKER_JSON:
-            self.pack = lambda data: json.dumps(data).encode('UTF-8')
-            self.unpack = lambda data: json.loads(data.decode('UTF-8'))
+            self.pack = lambda data: json.dumps(data, separators=(',',':')).encode('utf-8')
+            self.unpack = lambda data: json.loads(data.decode('utf-8'))
 
         elif pack_type == KT_PACKER_STRING:
-            self.pack = lambda data: data.encode('UTF-8')
-            self.unpack = lambda data: data.decode('UTF-8')
+            self.pack = lambda data: data.encode('utf-8')
+            self.unpack = lambda data: data.decode('utf-8')
 
         else:
             raise Exception('unsupported pack type specified')
@@ -61,7 +61,7 @@ class ProtocolHandler(object):
         return self.err
 
     def cursor(self):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def open(self, host, port, timeout):
         self.socket = socket.create_connection((host, port), timeout)
@@ -103,7 +103,7 @@ class ProtocolHandler(object):
                 self.err.set_error(self.err.LOGIC)
                 return 0
 
-            key = key.encode('UTF-8')
+            key = key.encode('utf-8')
             value = self.pack(value)
 
             request.append(struct.pack('!HIIq', db, len(key), len(value), expire))
@@ -140,7 +140,7 @@ class ProtocolHandler(object):
                 self.err.set_error(self.err.LOGIC)
                 return 0
 
-            key = key.encode('UTF-8')
+            key = key.encode('utf-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
@@ -174,7 +174,7 @@ class ProtocolHandler(object):
                 self.err.set_error(self.err.LOGIC)
                 return 0
 
-            key = key.encode('UTF-8')
+            key = key.encode('utf-8')
             request.append(struct.pack('!HI', db, len(key)))
             request.append(key)
 
@@ -191,7 +191,7 @@ class ProtocolHandler(object):
             key_db, key_length, value_length, key_expire = struct.unpack('!HIIq', self._read(18))
             key = self._read(key_length)
             value = self._read(value_length)
-            items[key.decode('UTF-8')] = self.unpack(value)
+            items[key.decode('utf-8')] = self.unpack(value)
 
         if num_items > 0:
             self.err.set_success()
@@ -201,26 +201,26 @@ class ProtocolHandler(object):
         return items
 
     def get_int(self, key, db=None):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def vacuum(self, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def match_prefix(self, prefix, max, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def match_regex(self, regex, max, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def set(self, key, value, expire, db):
         numitems = self.set_bulk({key: value}, expire, True, db)
         return numitems > 0
 
     def add(self, key, value, expire, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def cas(self, key, old_val, new_val, expire, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def remove(self, key, db):
         if key is None:
@@ -231,31 +231,31 @@ class ProtocolHandler(object):
         return numitems > 0
 
     def replace(self, key, value, expire, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def append(self, key, value, expire, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def increment(self, key, delta, expire, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def increment_double(self, key, delta, expire, db):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def report(self):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def status(self, db=None):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def clear(self, db=None):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def count(self, db=None):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def size(self, db=None):
-        raise NotImplementedError
+        raise NotImplementedError('supported under the HTTP procotol only')
 
     def _write(self, data):
         self.socket.sendall(data)
