@@ -55,7 +55,7 @@ def _dict_to_tsv(dict):
     lines = []
     for k, v in dict.items():
         quoted = quote_from_bytes(v) if isinstance(v, bytes) else quote(str(v))
-        lines.append(quote(k) + '\t' + quoted)
+        lines.append(quote(k.encode('utf-8')) + '\t' + quoted)
     return '\n'.join(lines)
 
 def _content_type_decoder(content_type=''):
@@ -452,7 +452,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/set_bulk'
         if db:
-            db = quote(db)
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_body = ''
@@ -461,7 +461,7 @@ class ProtocolHandler(object):
             request_body = 'atomic\t\n'
 
         for k, v in kv_dict.items():
-            k = quote(k)
+            k = quote(k.encode('utf-8'))
             v = quote(self.pack(v))
             request_body += '_' + k + '\t' + v + '\n'
 
@@ -486,14 +486,14 @@ class ProtocolHandler(object):
 
         request_body = ''
         for key in keys:
-            request_body += '_' + quote(key) + '\t\n'
+            request_body += '_' + quote(key.encode('utf-8')) + '\t\n'
         if len(request_body) < 1:
             self.err.set_error(self.err.LOGIC)
             return False
 
         path = '/rpc/remove_bulk'
         if db:
-            db = quote(db)
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
         self.conn.request('POST', path, body=request_header + request_body, headers=KT_HTTP_HEADER)
 
@@ -521,7 +521,7 @@ class ProtocolHandler(object):
 
         request_body = ''
         for key in keys:
-            request_body += '_' + quote(key) + '\t\n'
+            request_body += '_' + quote(key.encode('utf-8')) + '\t\n'
 
         if len(request_body) < 1:
             self.err.set_error(self.err.LOGIC)
@@ -529,7 +529,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/get_bulk'
         if db:
-            db = quote(db)
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
         self.conn.request('POST', path, body=request_header + request_body, headers=KT_HTTP_HEADER)
 
@@ -577,7 +577,7 @@ class ProtocolHandler(object):
         path = '/rpc/vacuum'
 
         if db:
-            db = quote(db)
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         self.conn.request('GET', path)
@@ -876,7 +876,7 @@ class ProtocolHandler(object):
         url = '/rpc/status'
 
         if db:
-            db = quote(db)
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             url += '?DB=' + db
 
         self.conn.request('GET', url)
@@ -897,7 +897,7 @@ class ProtocolHandler(object):
         url = '/rpc/clear'
 
         if db:
-            db = quote(db)
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             url += '?DB=' + db
 
         self.conn.request('GET', url)
