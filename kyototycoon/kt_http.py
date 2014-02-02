@@ -40,9 +40,7 @@ try:
 except ImportError:
     import json
 
-KT_HTTP_HEADER = {
-    'Content-Type' : 'text/tab-separated-values; colenc=U',
-}
+KT_HTTP_HEADER = { 'Content-Type' : 'text/tab-separated-values; colenc=U' }
 
 KT_PACKER_CUSTOM = 0
 KT_PACKER_PICKLE = 1
@@ -53,7 +51,7 @@ def _dict_to_tsv(dict):
     lines = []
     for k, v in dict.items():
         quoted = quote_from_bytes(v) if isinstance(v, bytes) else quote(str(v))
-        lines.append(quote(k.encode('utf-8')) + '\t' + quoted)
+        lines.append('%s\t%s' % (quote(k.encode('utf-8')), quoted))
     return '\n'.join(lines)
 
 def _content_type_decoder(content_type=''):
@@ -105,7 +103,7 @@ class Cursor(object):
         return self
 
     def __exit__(self, type, value, tb):
-        # Cleanup the cursor when leaving "with" blocks
+        # Cleanup the cursor when leaving "with" blocks...
         self.delete()
 
     def jump(self, key=None, db=None):
@@ -158,7 +156,6 @@ class Cursor(object):
         '''Step the cursor to the next record.'''
 
         path = '/rpc/cur_step'
-
         request_dict = {'CUR': self.cursor_id}
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -175,7 +172,6 @@ class Cursor(object):
         '''Step the cursor to the previous record.'''
 
         path = '/rpc/cur_step_back'
-
         request_dict = {'CUR': self.cursor_id}
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -188,16 +184,17 @@ class Cursor(object):
         self.err.set_success()
         return True
 
-    def set_value(self, value, step=False, xt=None):
+    def set_value(self, value, step=False, expire=None):
         '''Set the value for the current record.'''
 
         path = '/rpc/cur_set_value'
-
         request_dict = {'CUR': self.cursor_id, 'value': self.pack(value)}
+
         if step:
             request_dict['step'] = True
-        if xt:
-            request_dict['xt'] = xt
+
+        if expire:
+            request_dict['xt'] = expire
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -214,7 +211,6 @@ class Cursor(object):
         '''Remove the current record.'''
 
         path = '/rpc/cur_remove'
-
         request_dict = {'CUR': self.cursor_id}
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -231,8 +227,8 @@ class Cursor(object):
         '''Get the key for the current record.'''
 
         path = '/rpc/cur_get_key'
-
         request_dict = {'CUR': self.cursor_id}
+
         if step:
             request_dict['step'] = True
 
@@ -251,8 +247,8 @@ class Cursor(object):
         '''Get the value for the current record.'''
 
         path = '/rpc/cur_get_value'
-
         request_dict = {'CUR': self.cursor_id}
+
         if step:
             request_dict['step'] = True
 
@@ -271,8 +267,8 @@ class Cursor(object):
         '''Get a (key,value) pair for the current record.'''
 
         path = '/rpc/cur_get'
-
         request_dict = {'CUR': self.cursor_id}
+
         if step:
             request_dict['step'] = True
 
@@ -299,7 +295,6 @@ class Cursor(object):
         '''Get a (key,value) pair for the current record, and remove it atomically.'''
 
         path = '/rpc/cur_seize'
-
         request_dict = {'CUR': self.cursor_id}
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -320,7 +315,6 @@ class Cursor(object):
         '''Delete the cursor.'''
 
         path = '/rpc/cur_delete'
-
         request_dict = {'CUR': self.cursor_id}
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -422,14 +416,14 @@ class ProtocolHandler(object):
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
-        request_body = 'atomic\t\n' if atomic else ''
+        request_body = ['atomic\t\n' if atomic else '']
 
         for k, v in kv_dict.items():
             k = quote(k.encode('utf-8'))
             v = quote(self.pack(v))
-            request_body += '_' + k + '\t' + v + '\n'
+            request_body.append('_%s\t%s\n' % (k, v))
 
-        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=''.join(request_body), headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -444,18 +438,17 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return 0
 
-        request_header = 'atomic\t\n' if atomic else ''
-        request_body = ''
-
-        for key in keys:
-            request_body += '_' + quote(key.encode('utf-8')) + '\t\n'
-
         path = '/rpc/remove_bulk'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
-        self.conn.request('POST', path, body=request_header + request_body, headers=KT_HTTP_HEADER)
+        request_body = ['atomic\t\n' if atomic else '']
+
+        for key in keys:
+            request_body.append('_%s\t\n' % quote(key.encode('utf-8')))
+
+        self.conn.request('POST', path, body=''.join(request_body), headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -475,18 +468,17 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return {}
 
-        request_header = 'atomic\t\n' if atomic else ''
-        request_body = ''
-
-        for key in keys:
-            request_body += '_' + quote(key.encode('utf-8')) + '\t\n'
-
         path = '/rpc/get_bulk'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
-        self.conn.request('POST', path, body=request_header + request_body, headers=KT_HTTP_HEADER)
+        request_body = ['atomic\t\n' if atomic else '']
+
+        for key in keys:
+            request_body.append('_%s\t\n' % quote(key.encode('utf-8')))
+
+        self.conn.request('POST', path, body=''.join(request_body), headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -526,7 +518,6 @@ class ProtocolHandler(object):
 
     def vacuum(self, db):
         path = '/rpc/vacuum'
-
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
@@ -644,6 +635,10 @@ class ProtocolHandler(object):
         return True
 
     def cas(self, key, old_val, new_val, expire, db):
+        if old_val is None and new_val is None:
+            self.err.set_error(self.err.LOGIC)
+            return False
+
         path = '/rpc/cas'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -651,10 +646,12 @@ class ProtocolHandler(object):
 
         request_dict = {'key': key.encode('utf-8')}
 
-        if old_val:
+        if old_val is not None:
             request_dict['oval'] = self.pack(old_val)
-        if new_val:
+
+        if new_val is not None:
             request_dict['nval'] = self.pack(new_val)
+
         if expire:
             request_dict['xt'] = expire
 
@@ -744,7 +741,6 @@ class ProtocolHandler(object):
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
-        delta = int(delta)
         request_body = 'key\t%s\nnum\t%d\n' % (key, delta)
         self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
@@ -766,7 +762,6 @@ class ProtocolHandler(object):
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
-        delta = float(delta)
         request_body = 'key\t%s\nnum\t%f\n' % (key, delta)
         self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
@@ -794,13 +789,12 @@ class ProtocolHandler(object):
         return report_dict
 
     def status(self, db=None):
-        url = '/rpc/status'
-
+        path = '/rpc/status'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
-            url += '?DB=' + db
+            path += '?DB=' + db
 
-        self.conn.request('GET', url)
+        self.conn.request('GET', path)
         res, body = self.getresponse()
         if res.status != 200:
             self.err.set_error(self.err.EMISC)
@@ -815,13 +809,12 @@ class ProtocolHandler(object):
         return status_dict
 
     def clear(self, db=None):
-        url = '/rpc/clear'
-
+        path = '/rpc/clear'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
-            url += '?DB=' + db
+            path += '?DB=' + db
 
-        self.conn.request('GET', url)
+        self.conn.request('GET', path)
         res, body = self.getresponse()
         if res.status != 200:
             self.err.set_error(self.err.EMISC)
@@ -832,15 +825,11 @@ class ProtocolHandler(object):
 
     def count(self, db=None):
         st = self.status(db)
-        if st is None:
-            return None
-        return int(st['count'])
+        return None if st is None else int(st['count'])
 
     def size(self, db=None):
         st = self.status(db)
-        if st is None:
-            return None
-        return int(st['size'])
+        return None if st is None else int(st['size'])
 
     def play_script(self, name, kv_dict=None):
         if kv_dict is None:
@@ -848,16 +837,16 @@ class ProtocolHandler(object):
 
         path = '/rpc/play_script?name=' + quote(name.encode('utf-8'))
 
-        request_body = ''
+        request_body = []
         for k, v in kv_dict.items():
             if not isinstance(v, bytes):
                 raise ValueError('value must be a byte sequence')
 
             k = quote(k.encode('utf-8'))
             v = quote(v)
-            request_body += '_' + k + '\t' + v + '\n'
+            request_body.append('_%s\t%s\n' % (k, v))
 
-        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=''.join(request_body), headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -875,10 +864,9 @@ class ProtocolHandler(object):
         return rv
 
     def _rest_put(self, operation, key, value, expire):
-        headers = { 'X-Kt-Mode' : operation }
-        if expire != None:
-            expire = int(time.time()) + expire;
-            headers["X-Kt-Xt"] = str(expire)
+        headers = {'X-Kt-Mode' : operation}
+        if expire is not None:
+            headers["X-Kt-Xt"] = str(int(time.time()) + expire)
 
         self.conn.request('PUT', key, value, headers)
         res, body = self.getresponse()

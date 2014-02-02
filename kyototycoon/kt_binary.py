@@ -12,6 +12,7 @@
 
 import socket
 import struct
+import time
 
 from . import kt_error
 
@@ -72,31 +73,24 @@ class ProtocolHandler(object):
 
     def get(self, key, db=None):
         values = self.get_bulk([key], True, db)
-        if not values:
-            return None
-
-        return values[key]
+        return values[key] if values else None
 
     def set_bulk(self, kv_dict, expire, atomic, db):
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
             self.err.set_error(self.err.LOGIC)
             return 0
 
+        expire = DEFAULT_EXPIRE if expire is None else int(time.time()) + expire
+
         if db is None:
             db = 0
-
-        if expire is None:
-            expire = DEFAULT_EXPIRE
 
         request = [struct.pack('!BII', MB_SET_BULK, 0, len(kv_dict))]
 
         for key, value in kv_dict.items():
             key = key.encode('utf-8')
             value = self.pack(value)
-
-            request.append(struct.pack('!HIIq', db, len(key), len(value), expire))
-            request.append(key)
-            request.append(value)
+            request.extend([struct.pack('!HIIq', db, len(key), len(value), expire), key, value])
 
         self._write(b''.join(request))
 
@@ -106,7 +100,6 @@ class ProtocolHandler(object):
             return False
 
         num_items, = struct.unpack('!I', self._read(4))
-
         self.err.set_success()
         return num_items
 
@@ -122,8 +115,7 @@ class ProtocolHandler(object):
 
         for key in keys:
             key = key.encode('utf-8')
-            request.append(struct.pack('!HI', db, len(key)))
-            request.append(key)
+            request.extend([struct.pack('!HI', db, len(key)), key])
 
         self._write(b''.join(request))
 
@@ -152,8 +144,7 @@ class ProtocolHandler(object):
 
         for key in keys:
             key = key.encode('utf-8')
-            request.append(struct.pack('!HI', db, len(key)))
-            request.append(key)
+            request.extend([struct.pack('!HI', db, len(key)), key])
 
         self._write(b''.join(request))
 
@@ -242,10 +233,7 @@ class ProtocolHandler(object):
                 raise ValueError('value must be a byte sequence')
 
             key = key.encode('utf-8')
-
-            request.append(struct.pack('!II', len(key), len(value)))
-            request.append(key)
-            request.append(value)
+            request.extend([struct.pack('!II', len(key), len(value)), key, value])
 
         self._write(b''.join(request))
 
