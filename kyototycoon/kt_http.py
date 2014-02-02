@@ -112,11 +112,11 @@ class Cursor(object):
         path = '/rpc/cur_jump'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
-            path = '%s?DB=%s' % (path, db)
+            path += '?DB=' + db
 
         request_dict = {'CUR': self.cursor_id}
         if key:
-            request_dict['key'] = quote(key.encode('utf-8'))
+            request_dict['key'] = key.encode('utf-8')
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -135,11 +135,11 @@ class Cursor(object):
         path = '/rpc/cur_jump_back'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
-            path = '%s?DB=%s' % (path, db)
+            path += '?DB=' + db
 
         request_dict = {'CUR': self.cursor_id}
         if key:
-            request_dict['key'] = quote(key.encode('utf-8'))
+            request_dict['key'] = key.encode('utf-8')
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -533,24 +533,28 @@ class ProtocolHandler(object):
         return True
 
     def match_prefix(self, prefix, max, db):
-        rv = []
-        request_dict = {'prefix': prefix.encode('utf-8')}
+        if prefix is None:
+            self.err.set_error(self.err.LOGIC)
+            return None
 
+        path = '/rpc/match_prefix'
+        if db:
+            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            path += '?DB=' + db
+
+        request_dict = {'prefix': prefix.encode('utf-8')}
         if max:
             request_dict['max'] = max
 
-        if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
-            request_dict['DB'] = db
-
         request_body = _dict_to_tsv(request_dict)
-        self.conn.request('POST', '/rpc/match_prefix', body=request_body, headers=KT_HTTP_HEADER)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.getresponse()
         if res.status != 200:
             self.err.set_error(self.err.EMISC)
             return False
 
+        rv = []
         res_list = _tsv_to_list(body, res.getheader('Content-Type', ''))
         if len(res_list) == 0 or res_list[-1][0] != b'num':
             self.err.set_error(self.err.EMISC)
@@ -644,7 +648,7 @@ class ProtocolHandler(object):
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
-        request_dict = {'key': quote(key.encode('utf-8'))}
+        request_dict = {'key': key.encode('utf-8')}
 
         if old_val is not None:
             request_dict['oval'] = self.pack(old_val)
