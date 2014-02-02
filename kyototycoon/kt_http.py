@@ -40,7 +40,7 @@ try:
 except ImportError:
     import json
 
-KT_HTTP_HEADER = { 'Content-Type' : 'text/tab-separated-values; colenc=U' }
+KT_HTTP_HEADER = {'Content-Type' : 'text/tab-separated-values; colenc=U'}
 
 KT_PACKER_CUSTOM = 0
 KT_PACKER_PICKLE = 1
@@ -116,7 +116,7 @@ class Cursor(object):
 
         request_dict = {'CUR': self.cursor_id}
         if key:
-            request_dict['key'] = key.encode('utf-8')
+            request_dict['key'] = quote(key.encode('utf-8'))
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -139,7 +139,7 @@ class Cursor(object):
 
         request_dict = {'CUR': self.cursor_id}
         if key:
-            request_dict['key'] = key.encode('utf-8')
+            request_dict['key'] = quote(key.encode('utf-8'))
 
         request_body = _dict_to_tsv(request_dict)
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
