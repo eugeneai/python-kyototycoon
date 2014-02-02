@@ -25,6 +25,7 @@ to 6x, but only the following operations are available:
   * ``get()`` and ``get_bulk()``
   * ``set()`` and ``set_bulk()``
   * ``remove()`` and ``remove_bulk()``
+  * ``play_script()``
 
 Other operations will throw a ``NotImplementedError`` exception.
 
