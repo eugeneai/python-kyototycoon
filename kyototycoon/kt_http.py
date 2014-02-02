@@ -642,9 +642,9 @@ class ProtocolHandler(object):
         path = '/rpc/cas'
         if db:
             db = db if isinstance(db, int) else quote(db.encode('utf-8'))
-            key = '/%s/%s' % (db, key)
+            path += '?DB=' + db
 
-        request_dict = {'key': key.encode('utf-8')}
+        request_dict = {'key': quote(key.encode('utf-8'))}
 
         if old_val is not None:
             request_dict['oval'] = self.pack(old_val)

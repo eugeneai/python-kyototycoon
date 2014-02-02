@@ -46,9 +46,9 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.set('ice', 'cream', db=DB_2))
         self.assertFalse(self.kt_handle.set('palo', 'alto', db=DB_INVALID))
 
-        assert self.kt_handle.get('ice') is None
-        assert self.kt_handle.get('ice', db=DB_1) is None
-        assert self.kt_handle.get('ice', db=DB_INVALID) is None
+        self.assertEqual(self.kt_handle.get('ice'), None)
+        self.assertEqual(self.kt_handle.get('ice', db=DB_1), None)
+        self.assertFalse(self.kt_handle.get('ice', db=DB_INVALID))
 
         self.assertEqual(self.kt_handle.get('ice', db='two.kch'), 'cream')
         self.assertEqual(self.kt_handle.count(db=DB_1), 0)
@@ -59,8 +59,8 @@ class UnitTest(unittest.TestCase):
 
         self.assertEqual(self.kt_handle.get('frozen'), 'yoghurt')
         self.assertEqual(self.kt_handle.get('frozen', db=DB_1), 'yoghurt')
-        assert self.kt_handle.get('frozen', db=DB_2) is None
-        assert self.kt_handle.get('frozen', db=DB_INVALID) is None
+        self.assertEqual(self.kt_handle.get('frozen', db=DB_2), None)
+        self.assertFalse(self.kt_handle.get('frozen', db=DB_INVALID), None)
 
         self.assertTrue(self.kt_handle.clear(db=DB_1))
         self.assertEqual(self.kt_handle.count(db=DB_1), 0)
@@ -120,10 +120,10 @@ class UnitTest(unittest.TestCase):
     def test_cas(self):
         self.assertTrue(self.clear_all())
         self.assertTrue(self.kt_handle.set('key', 'xxx'))
-        self.assertFalse(self.kt_handle.cas('key', old_val='xxx',
-                                            new_val='yyy', db=DB_2))
-        self.assertTrue(self.kt_handle.cas('key', old_val='xxx',
-                                            new_val='yyy', db=DB_1))
+        self.assertEqual(self.kt_handle.get('key', db=DB_2), None)
+        self.assertFalse(self.kt_handle.cas('key', old_val='xxx', new_val='yyy', db=DB_2))
+        self.assertEqual(self.kt_handle.get('key', db=DB_1), 'xxx')
+        self.assertTrue(self.kt_handle.cas('key', old_val='xxx', new_val='yyy', db=DB_1))
         self.assertTrue(self.kt_handle.cas('key', new_val='xxx', db=DB_2))
 
     def test_remove(self):

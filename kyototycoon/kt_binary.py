@@ -12,7 +12,6 @@
 
 import socket
 import struct
-import time
 
 from . import kt_error
 
@@ -80,7 +79,8 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC)
             return 0
 
-        expire = DEFAULT_EXPIRE if expire is None else int(time.time()) + expire
+        if expire is None:
+            expire = DEFAULT_EXPIRE
 
         if db is None:
             db = 0
