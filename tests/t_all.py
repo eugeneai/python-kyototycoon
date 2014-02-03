@@ -8,6 +8,8 @@
 # USAGE:
 #   $ python t_all.py
 #   $ python t_all.py ExpireTestCase
+#   $ python t_all.py MultiTestCase
+#   $ python t_all.py ScriptTestCase
 
 import os
 import re
@@ -24,7 +26,7 @@ def _run_all_tests():
         match = _TEST_MODULE_PATTERN.search(filename)
         if match:
             case = match.group(1)
-            if case != 't_expire' and case != 't_multi':
+            if case not in ('t_expire', 't_multi', 't_script'):
                 module_names.append(case)
 
     return loader.loadTestsFromNames(module_names)
@@ -32,6 +34,14 @@ def _run_all_tests():
 def ExpireTestCase():
     loader = unittest.TestLoader()
     return loader.loadTestsFromName('t_expire')
+
+def MultiTestCase():
+    loader = unittest.TestLoader()
+    return loader.loadTestsFromName('t_multi')
+
+def ScriptTestCase():
+    loader = unittest.TestLoader()
+    return loader.loadTestsFromName('t_script')
 
 if __name__ == '__main__':
     unittest.main(defaultTest='_run_all_tests')
