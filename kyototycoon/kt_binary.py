@@ -29,6 +29,7 @@ KT_PACKER_CUSTOM = 0
 KT_PACKER_PICKLE = 1
 KT_PACKER_JSON   = 2
 KT_PACKER_STRING = 3
+KT_PACKER_BYTES  = 4
 
 MB_SET_BULK = 0xb8
 MB_GET_BULK = 0xba
@@ -39,19 +40,36 @@ MB_PLAY_SCRIPT = 0xb4
 DEFAULT_EXPIRE = 0x7fffffffffffffff
 
 class ProtocolHandler(object):
-    def __init__(self, pack_type=KT_PACKER_PICKLE, pickle_protocol=2):
+    def __init__(self, pack_type=KT_PACKER_PICKLE, pickle_protocol=2, custom_packer=None):
         self.err = kt_error.KyotoTycoonError()
         self.socket = None
+
+        if pack_type != KT_PACKER_CUSTOM and custom_packer is not None:
+            raise Exception('custom packer object supported for "KT_PACKER_CUSTOM" only')
 
         if pack_type == KT_PACKER_PICKLE:
             self.pack = lambda data: pickle.dumps(data, pickle_protocol)
             self.unpack = lambda data: pickle.loads(data)
+
         elif pack_type == KT_PACKER_JSON:
             self.pack = lambda data: json.dumps(data, separators=(',',':')).encode('utf-8')
             self.unpack = lambda data: json.loads(data.decode('utf-8'))
+
         elif pack_type == KT_PACKER_STRING:
             self.pack = lambda data: data.encode('utf-8')
             self.unpack = lambda data: data.decode('utf-8')
+
+        elif pack_type == KT_PACKER_BYTES:
+            self.pack = lambda data: data
+            self.unpack = lambda data: data
+
+        elif pack_type == KT_PACKER_CUSTOM:
+            if custom_packer is None:
+                raise Exception('"KT_PACKER_CUSTOM" requires a packer object')
+
+            self.pack = custom_packer.pack
+            self.unpack = custom_packer.unpack
+
         else:
             raise Exception('unsupported pack type specified')
 
