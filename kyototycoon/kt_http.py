@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011, Toru Maesaka
@@ -12,6 +11,12 @@ import time
 import sys
 
 from . import kt_error
+
+from .kt_common import KT_PACKER_CUSTOM, \
+                       KT_PACKER_PICKLE, \
+                       KT_PACKER_JSON, \
+                       KT_PACKER_STRING, \
+                       KT_PACKER_BYTES
 
 try:
     import httplib
@@ -41,12 +46,6 @@ except ImportError:
     import json
 
 KT_HTTP_HEADER = {'Content-Type' : 'text/tab-separated-values; colenc=U'}
-
-KT_PACKER_CUSTOM = 0
-KT_PACKER_PICKLE = 1
-KT_PACKER_JSON   = 2
-KT_PACKER_STRING = 3
-KT_PACKER_BYTES  = 4
 
 def _dict_to_tsv(dict):
     lines = []
@@ -112,7 +111,7 @@ class Cursor(object):
 
         path = '/rpc/cur_jump'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_dict = {'CUR': self.cursor_id}
@@ -135,7 +134,7 @@ class Cursor(object):
 
         path = '/rpc/cur_jump_back'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_dict = {'CUR': self.cursor_id}
@@ -330,7 +329,7 @@ class Cursor(object):
 
 
 class ProtocolHandler(object):
-    def __init__(self, pack_type=KT_PACKER_PICKLE, pickle_protocol=2, custom_packer=None):
+    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None):
         self.err = kt_error.KyotoTycoonError()
         self.pack_type = pack_type
 
@@ -338,7 +337,8 @@ class ProtocolHandler(object):
             raise Exception('custom packer object supported for "KT_PACKER_CUSTOM" only')
 
         if pack_type == KT_PACKER_PICKLE:
-            self.pack = lambda data: pickle.dumps(data, pickle_protocol)
+            # Pickle protocol v2 is is used here instead of the default...
+            self.pack = lambda data: pickle.dumps(data, 2)
             self.unpack = lambda data: pickle.loads(data)
 
         elif pack_type == KT_PACKER_JSON:
@@ -407,7 +407,7 @@ class ProtocolHandler(object):
     def get(self, key, db=None):
         key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         self.conn.request('GET', key)
@@ -431,7 +431,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/set_bulk'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_body = ['atomic\t\n' if atomic else '']
@@ -458,7 +458,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/remove_bulk'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_body = ['atomic\t\n' if atomic else '']
@@ -488,7 +488,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/get_bulk'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_body = ['atomic\t\n' if atomic else '']
@@ -521,7 +521,7 @@ class ProtocolHandler(object):
     def get_int(self, key, db=None):
         key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         self.conn.request('GET', key)
@@ -537,7 +537,7 @@ class ProtocolHandler(object):
     def vacuum(self, db):
         path = '/rpc/vacuum'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         self.conn.request('GET', path)
@@ -557,7 +557,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/match_prefix'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_dict = {'prefix': prefix.encode('utf-8')}
@@ -595,7 +595,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/match_regex'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_dict = {'regex': regex.encode('utf-8')}
@@ -629,7 +629,7 @@ class ProtocolHandler(object):
     def set(self, key, value, expire, db):
         key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
@@ -644,7 +644,7 @@ class ProtocolHandler(object):
     def add(self, key, value, expire, db):
         key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
@@ -663,7 +663,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/cas'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_dict = {'key': key.encode('utf-8')}
@@ -692,7 +692,7 @@ class ProtocolHandler(object):
     def remove(self, key, db):
         key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         self.conn.request('DELETE', key)
@@ -708,7 +708,7 @@ class ProtocolHandler(object):
     def replace(self, key, value, expire, db):
         key = quote(key.encode('utf-8'))
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             key = '/%s/%s' % (db, key)
 
         value = self.pack(value)
@@ -760,7 +760,7 @@ class ProtocolHandler(object):
     def increment(self, key, delta, expire, db):
         path = '/rpc/increment'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_body = 'key\t%s\nnum\t%d\n' % (key, delta)
@@ -781,7 +781,7 @@ class ProtocolHandler(object):
 
         path = '/rpc/increment_double'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         request_body = 'key\t%s\nnum\t%f\n' % (key, delta)
@@ -813,7 +813,7 @@ class ProtocolHandler(object):
     def status(self, db=None):
         path = '/rpc/status'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         self.conn.request('GET', path)
@@ -833,7 +833,7 @@ class ProtocolHandler(object):
     def clear(self, db=None):
         path = '/rpc/clear'
         if db:
-            db = db if isinstance(db, int) else quote(db.encode('utf-8'))
+            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
             path += '?DB=' + db
 
         self.conn.request('GET', path)
@@ -894,4 +894,4 @@ class ProtocolHandler(object):
         res, body = self.getresponse()
         return res.status
 
-# vim: set expandtab ts=4 sw=4
+# EOF - kt_http.py

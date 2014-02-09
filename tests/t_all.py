@@ -5,11 +5,11 @@
 # Redistribution and use of this source code is licensed under
 # the BSD license. See COPYING file for license description.
 #
+# Kyoto Tycoon should be started like this:
+#   $ ktserver -ls -scr t_script.lua '%' '%'
+#
 # USAGE:
 #   $ python t_all.py
-#   $ python t_all.py ExpireTestCase
-#   $ python t_all.py MultiTestCase
-#   $ python t_all.py ScriptTestCase
 
 import os
 import re
@@ -25,19 +25,9 @@ def _run_all_tests():
     for filename in os.listdir(test_path):
         match = _TEST_MODULE_PATTERN.search(filename)
         if match:
-            case = match.group(1)
-            if case not in ('t_expire', 't_multi', 't_script'):
-                module_names.append(case)
+            module_names.append(match.group(1))
 
     return loader.loadTestsFromNames(module_names)
-
-def ExpireTestCase():
-    loader = unittest.TestLoader()
-    return loader.loadTestsFromName('t_expire')
-
-def MultiTestCase():
-    loader = unittest.TestLoader()
-    return loader.loadTestsFromName('t_multi')
 
 def ScriptTestCase():
     loader = unittest.TestLoader()

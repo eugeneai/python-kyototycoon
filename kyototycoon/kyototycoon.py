@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011, Toru Maesaka
@@ -12,16 +11,25 @@
 from . import kt_http
 from . import kt_binary
 
+from .kt_common import KT_PACKER_PICKLE
+
 KT_DEFAULT_HOST = '127.0.0.1'
 KT_DEFAULT_PORT = 1978
 KT_DEFAULT_TIMEOUT = 30
 
 class KyotoTycoon(object):
-    def __init__(self, binary=False, *args, **kwargs):
-        '''Initialize a "Binary Protocol" or "HTTP" KyotoTycoon object.'''
+    def __init__(self, binary=False, pack_type=KT_PACKER_PICKLE, custom_packer=None):
+        '''
+        Initialize a "Binary Protocol" or "HTTP Protocol" KyotoTycoon object.
+
+        Note: The default packer uses pickle protocol v2, which is the highest
+              version that's still compatible with both Python 2 and 3. If you
+              require a different version, specify a custom packer object.
+
+        '''
 
         protocol = kt_binary if binary else kt_http
-        self.core = protocol.ProtocolHandler(*args, **kwargs)
+        self.core = protocol.ProtocolHandler(pack_type, custom_packer)
 
     def error(self):
         '''Return the error state from the last operation.'''
@@ -159,4 +167,4 @@ class KyotoTycoon(object):
 
         return self.core.play_script(name, kv_dict)
 
-# vim: set expandtab ts=4 sw=4
+# EOF - kyototycoon.py

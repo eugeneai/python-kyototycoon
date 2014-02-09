@@ -4,6 +4,9 @@
 #
 # Redistribution and use of this source code is licensed under
 # the BSD license. See COPYING file for license description.
+#
+# Kyoto Tycoon should be started like this:
+#   $ ktserver -scr example/ktscrex.lua '%'
 
 import config
 import unittest

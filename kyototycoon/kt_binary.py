@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
 # Copyright 2013, Carlos Rodrigues
@@ -15,6 +14,12 @@ import struct
 
 from . import kt_error
 
+from .kt_common import KT_PACKER_CUSTOM, \
+                       KT_PACKER_PICKLE, \
+                       KT_PACKER_JSON, \
+                       KT_PACKER_STRING, \
+                       KT_PACKER_BYTES
+
 try:
     import cPickle as pickle
 except ImportError:
@@ -25,12 +30,6 @@ try:
 except ImportError:
     import json
 
-KT_PACKER_CUSTOM = 0
-KT_PACKER_PICKLE = 1
-KT_PACKER_JSON   = 2
-KT_PACKER_STRING = 3
-KT_PACKER_BYTES  = 4
-
 MB_SET_BULK = 0xb8
 MB_GET_BULK = 0xba
 MB_REMOVE_BULK = 0xb9
@@ -40,7 +39,7 @@ MB_PLAY_SCRIPT = 0xb4
 DEFAULT_EXPIRE = 0x7fffffffffffffff
 
 class ProtocolHandler(object):
-    def __init__(self, pack_type=KT_PACKER_PICKLE, pickle_protocol=2, custom_packer=None):
+    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None):
         self.err = kt_error.KyotoTycoonError()
         self.socket = None
 
@@ -48,7 +47,8 @@ class ProtocolHandler(object):
             raise Exception('custom packer object supported for "KT_PACKER_CUSTOM" only')
 
         if pack_type == KT_PACKER_PICKLE:
-            self.pack = lambda data: pickle.dumps(data, pickle_protocol)
+            # Pickle protocol v2 is is used here instead of the default...
+            self.pack = lambda data: pickle.dumps(data, 2)
             self.unpack = lambda data: pickle.loads(data)
 
         elif pack_type == KT_PACKER_JSON:
@@ -287,4 +287,4 @@ class ProtocolHandler(object):
 
         return b''.join(buf)
 
-# vim: set expandtab ts=4 sw=4
+# EOF - kt_binary.py

@@ -1,7 +1,14 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .kyototycoon import KyotoTycoon
-from .kyototycoon import KT_DEFAULT_HOST, KT_DEFAULT_PORT, KT_DEFAULT_TIMEOUT
+from .kyototycoon import KyotoTycoon, \
+                         KT_DEFAULT_HOST, \
+                         KT_DEFAULT_PORT, \
+                         KT_DEFAULT_TIMEOUT
 
-# vim: set expandtab ts=4 sw=4
+from .kt_common import KT_PACKER_CUSTOM, \
+                       KT_PACKER_PICKLE, \
+                       KT_PACKER_JSON, \
+                       KT_PACKER_STRING, \
+                       KT_PACKER_BYTES
+
+# EOF - __init__.py

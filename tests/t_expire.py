@@ -27,14 +27,14 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_http_handle.set('key1', 'value', 2))
         self.assertEqual(self.kt_http_handle.get('key1'), 'value')
         self.assertEqual(self.kt_http_handle.count(), 1)
-        time.sleep(3)
+        time.sleep(4)
         self.assertEqual(self.kt_http_handle.count(), 0)
 
         # Set record to be expired in 2 seconds.
         self.assertTrue(self.kt_bin_handle.set('key2', 'value', 2))
         self.assertEqual(self.kt_bin_handle.get('key2'), 'value')
         self.assertEqual(self.kt_http_handle.count(), 1)
-        time.sleep(3)
+        time.sleep(4)
         self.assertEqual(self.kt_http_handle.count(), 0)
 
     def test_add_expire(self):
@@ -42,7 +42,7 @@ class UnitTest(unittest.TestCase):
 
         self.assertTrue(self.kt_http_handle.add('hello', 'world', 2))
         self.assertEqual(self.kt_http_handle.get('hello'), 'world')
-        time.sleep(3)
+        time.sleep(4)
         self.assertEqual(self.kt_http_handle.get('hello'), None)
 
 if __name__ == '__main__':

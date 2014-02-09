@@ -37,7 +37,7 @@ import os, os.path
 from time import time
 from getopt import getopt, GetoptError
 
-from kyototycoon import KyotoTycoon
+from kyototycoon import KyotoTycoon, KT_PACKER_PICKLE, KT_PACKER_JSON, KT_PACKER_STRING
 
 
 NUM_ITERATIONS = 2000
@@ -88,9 +88,9 @@ def main():
     is_unicode = isinstance("", type(unicode_literal))
 
     for binary in (True, False):
-        for packer_type, packer_name in ((1, "KT_PACKER_PICKLE"),
-                                         (2, "KT_PACKER_JSON"),
-                                         (3, "KT_PACKER_STRING")):
+        for packer_type, packer_name in ((KT_PACKER_PICKLE, "KT_PACKER_PICKLE"),
+                                         (KT_PACKER_JSON, "KT_PACKER_JSON"),
+                                         (KT_PACKER_STRING, "KT_PACKER_STRING")):
             kt = KyotoTycoon(binary=binary, pack_type=packer_type)
             kt.open(server["host"], server["port"], timeout=2)
 
@@ -131,4 +131,4 @@ if __name__ == "__main__":
     main()
 
 
-# vim: set expandtab ts=4 sw=4
+# EOF - kt_performance.py
