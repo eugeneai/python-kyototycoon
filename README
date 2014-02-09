@@ -1,7 +1,8 @@
 ABOUT
 -----
-Python client library for Kyoto Tycoon. For more information on
-Kyoto Tycoon please refer to the official project website:
+This is a native Python client library for Kyoto Tycoon.
+For more information on Kyoto Tycoon please refer to the
+official project website:
 
   http://fallabs.com/kyototycoon/
 
@@ -10,13 +11,14 @@ provided by Kyoto Tycoon's original author(s):
 
   http://fallabs.com/kyototycoon/kyototycoon.idl
 
-There is currently no documentation for this software but in
-the meantime please see the file "kyototycoon.py" for the
+There is currently no documentation for this software but, in
+the meantime, please see the file "kyototycoon.py" for the
 interface.
 
-This fork includes cursor support and significant performance
-improvements over the original library. It also supports unicode
-keys and works with both Python 2.x and 3.x.
+This library includes cursor support and significant performance
+improvements over the (now unmaintained) original library by
+Toru Maesaka. It also supports unicode keys and works with both
+Python 2 and 3.
 
 The more efficient binary protocol is also supported along with
 the HTTP protocol. It provides a performance improvement of up
@@ -56,24 +58,39 @@ the called script returns and must do the marshalling itself.
 
 INSTALLATION
 ------------
-Using pip::
+You can install the latest version of this library from source::
+
+    python setup.py build
+    python setup.py install
+
+A version of this library is available from PyPI, although it may
+not always be the latest and greatest version. You can find it at:
+
+  https://pypi.python.org/pypi/python-kyototycoon/
+
+You can install packages directly from PyPI using ``pip``::
 
     pip install python-kyototycoon
 
-Or, from source::
+This library is still not at version 1.0, which means the API and
+behavior are not guaranteed to remain consistent between versions.
+If you require a specific version consider using versioning with
+``pip``. For example::
 
-    python setup.py build
-    sudo python setup.py install
+    pip install python-kyototycoon==0.4.6
+
+This is ideal for use with any automatic scripts you may be using
+to build/deploy your application.
 
 
 AUTHORS
 -------
   * Toru Maesaka <dev@torum.net>
   * Stephen Hamer <stephen.hamer@upverter.com>
+  * Carlos Rodrigues <cefrodrigues@gmail.com>
 
-Binary protocol support was added by Carlos Rodrigues based
-on Ulrich Mierendorff's code with only minimal changes to make
-it fit this library. You can find the original library at the
-following URL:
+Binary protocol support was added based on Ulrich Mierendorff's
+code with only minimal changes to make it fit this library.
+You can find the original library at the following URL:
 
   http://www.ulrichmierendorff.com/software/kyoto_tycoon/python_library.html
