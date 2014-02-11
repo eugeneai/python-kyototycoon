@@ -50,6 +50,9 @@ class KyotoTycoonError(object):
         self.error_name = self.ErrorNameDict[code]
         self.error_message = self.ErrorMessageDict[code]
 
+    def ok(self):
+        return self.error_code == self.SUCCESS
+
     def code(self):
         return self.error_code
 
