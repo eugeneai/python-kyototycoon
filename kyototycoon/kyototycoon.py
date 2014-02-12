@@ -18,9 +18,14 @@ KT_DEFAULT_PORT = 1978
 KT_DEFAULT_TIMEOUT = 30
 
 class KyotoTycoon(object):
-    def __init__(self, binary=False, pack_type=KT_PACKER_PICKLE, custom_packer=None):
+    def __init__(self, binary=False, pack_type=KT_PACKER_PICKLE,
+                       custom_packer=None, exceptions=False):
         '''
         Initialize a "Binary Protocol" or "HTTP Protocol" KyotoTycoon object.
+
+        The library doesn't raise exceptions for server errors (soft errors) by
+        default (for historical reasons). This behavior can be changed by using
+        the "exceptions" parameter.
 
         Note: The default packer uses pickle protocol v2, which is the highest
               version that's still compatible with both Python 2 and 3. If you
@@ -29,7 +34,7 @@ class KyotoTycoon(object):
         '''
 
         protocol = kt_binary if binary else kt_http
-        self.core = protocol.ProtocolHandler(pack_type, custom_packer)
+        self.core = protocol.ProtocolHandler(pack_type, custom_packer, exceptions)
 
     def error(self):
         '''Return the error state from the last operation.'''

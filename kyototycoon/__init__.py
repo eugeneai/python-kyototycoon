@@ -11,4 +11,6 @@ from .kt_common import KT_PACKER_CUSTOM, \
                        KT_PACKER_STRING, \
                        KT_PACKER_BYTES
 
+from .kt_error import KyotoTycoonException
+
 # EOF - __init__.py

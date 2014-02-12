@@ -14,7 +14,7 @@ setup(
     maintainer_email='cefrodrigues@gmail.com',
     name='python-kyototycoon',
     description='Kyoto Tycoon Client Library',
-    version='0.5.6',
+    version='0.5.7',
     license='BSD',
     keywords='Kyoto Tycoon, Kyoto Cabinet',
     packages=['kyototycoon'],

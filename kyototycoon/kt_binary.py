@@ -39,8 +39,8 @@ MB_PLAY_SCRIPT = 0xb4
 DEFAULT_EXPIRE = 0x7fffffffffffffff
 
 class ProtocolHandler(object):
-    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None):
-        self.err = kt_error.KyotoTycoonError()
+    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None, exceptions=False):
+        self.err = kt_error.KyotoTycoonError(exceptions)
         self.socket = None
 
         if pack_type != KT_PACKER_CUSTOM and custom_packer is not None:
@@ -94,7 +94,7 @@ class ProtocolHandler(object):
 
     def set_bulk(self, kv_dict, expire, atomic, db):
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no key:value pairs specified')
             return 0
 
         if expire is None:
@@ -123,7 +123,7 @@ class ProtocolHandler(object):
 
     def remove_bulk(self, keys, atomic, db):
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no keys specified')
             return 0
 
         if db is None:
@@ -152,7 +152,7 @@ class ProtocolHandler(object):
 
     def get_bulk(self, keys, atomic, db):
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no keys specified')
             return {}
 
         if db is None:

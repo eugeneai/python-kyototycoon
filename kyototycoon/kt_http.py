@@ -329,8 +329,8 @@ class Cursor(object):
 
 
 class ProtocolHandler(object):
-    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None):
-        self.err = kt_error.KyotoTycoonError()
+    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None, exceptions=False):
+        self.err = kt_error.KyotoTycoonError(exceptions)
         self.pack_type = pack_type
 
         if pack_type != KT_PACKER_CUSTOM and custom_packer is not None:
@@ -426,7 +426,7 @@ class ProtocolHandler(object):
 
     def set_bulk(self, kv_dict, expire, atomic, db):
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no key:value pairs specified')
             return 0
 
         path = '/rpc/set_bulk'
@@ -453,7 +453,7 @@ class ProtocolHandler(object):
 
     def remove_bulk(self, keys, atomic, db):
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no keys specified')
             return 0
 
         path = '/rpc/remove_bulk'
@@ -483,7 +483,7 @@ class ProtocolHandler(object):
 
     def get_bulk(self, keys, atomic, db):
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no keys specified')
             return {}
 
         path = '/rpc/get_bulk'
@@ -552,7 +552,7 @@ class ProtocolHandler(object):
 
     def match_prefix(self, prefix, max, db):
         if prefix is None:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no key prefix specified')
             return None
 
         path = '/rpc/match_prefix'
@@ -590,7 +590,7 @@ class ProtocolHandler(object):
 
     def match_regex(self, regex, max, db):
         if regex is None:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no regular expression specified')
             return None
 
         path = '/rpc/match_regex'
@@ -658,7 +658,7 @@ class ProtocolHandler(object):
 
     def cas(self, key, old_val, new_val, expire, db):
         if old_val is None and new_val is None:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'old value and/or new value must be specified')
             return False
 
         path = '/rpc/cas'
@@ -739,7 +739,7 @@ class ProtocolHandler(object):
 
         if (not isinstance(data, bytes_type) and
             not isinstance(data, unicode_type)):
-            self.err.set_error(self.err.EMISC)
+            self.err.set_error(self.err.EMISC, 'stored value is not a string or bytes type')
             return False
 
         if type(data) != type(value):
@@ -751,7 +751,7 @@ class ProtocolHandler(object):
         data += value
 
         if self.set(key, data, expire, db) is not True:
-            self.err.set_error(self.err.EMISC)
+            self.err.set_error(self.err.EMISC, 'error while storing modified value')
             return False
 
         self.err.set_success()
@@ -776,7 +776,7 @@ class ProtocolHandler(object):
 
     def increment_double(self, key, delta, expire, db):
         if key is None:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.LOGIC, 'no key specified')
             return False
 
         path = '/rpc/increment_double'
@@ -872,7 +872,7 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.LOGIC)
+            self.err.set_error(self.err.MISC)
             return None
 
         rv = {}
