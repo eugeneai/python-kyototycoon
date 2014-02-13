@@ -29,10 +29,13 @@ to 6x, but only the following operations are available:
   * ``remove()`` and ``remove_bulk()``
   * ``play_script()``
 
-Other operations will throw a ``NotImplementedError`` exception
-but, as a last resort, it's always possible to have two
-KyotoTycoon objects open to the same server, one using HTTP and
-the other using the binary protocol.
+Atomic operations aren't supported with the binary protocol,
+the use of "atomic=False" is mandatory when using it. Operations
+besides these will raise a ``NotImplementedError`` exception.
+
+It's possible to have two KyotoTycoon objects open to the same
+server in the same application, one using HTTP and the other
+using the binary protocol, if necessary.
 
 The library does automatic packing and unpacking (marshalling)
 of values coming from/to the database. The following data

@@ -12,7 +12,7 @@
 import socket
 import struct
 
-from . import kt_error
+from .kt_error import KyotoTycoonError, KyotoTycoonException
 
 from .kt_common import KT_PACKER_CUSTOM, \
                        KT_PACKER_PICKLE, \
@@ -40,11 +40,11 @@ DEFAULT_EXPIRE = 0x7fffffffffffffff
 
 class ProtocolHandler(object):
     def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None, exceptions=False):
-        self.err = kt_error.KyotoTycoonError(exceptions)
+        self.err = KyotoTycoonError(exceptions)
         self.socket = None
 
         if pack_type != KT_PACKER_CUSTOM and custom_packer is not None:
-            raise Exception('custom packer object supported for "KT_PACKER_CUSTOM" only')
+            raise KyotoTycoonException('custom packer object supported for "KT_PACKER_CUSTOM" only')
 
         if pack_type == KT_PACKER_PICKLE:
             # Pickle protocol v2 is is used here instead of the default...
@@ -65,13 +65,13 @@ class ProtocolHandler(object):
 
         elif pack_type == KT_PACKER_CUSTOM:
             if custom_packer is None:
-                raise Exception('"KT_PACKER_CUSTOM" requires a packer object')
+                raise KyotoTycoonException('"KT_PACKER_CUSTOM" requires a packer object')
 
             self.pack = custom_packer.pack
             self.unpack = custom_packer.unpack
 
         else:
-            raise Exception('unsupported pack type specified')
+            raise KyotoTycoonException('unsupported pack type specified')
 
     def error(self):
         return self.err
@@ -89,10 +89,13 @@ class ProtocolHandler(object):
         return True
 
     def get(self, key, db=None):
-        values = self.get_bulk([key], True, db)
+        values = self.get_bulk([key], False, db)
         return values[key] if values else None
 
     def set_bulk(self, kv_dict, expire, atomic, db):
+        if atomic:
+            raise KyotoTycoonException('atomic supported under the HTTP procotol only')
+
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
             self.err.set_error(self.err.LOGIC, 'no key:value pairs specified')
             return 0
@@ -122,6 +125,9 @@ class ProtocolHandler(object):
         return num_items
 
     def remove_bulk(self, keys, atomic, db):
+        if atomic:
+            raise KyotoTycoonException('atomic supported under the HTTP procotol only')
+
         if len(keys) < 1:
             self.err.set_error(self.err.LOGIC, 'no keys specified')
             return 0
@@ -151,6 +157,9 @@ class ProtocolHandler(object):
         return num_items
 
     def get_bulk(self, keys, atomic, db):
+        if atomic:
+            raise KyotoTycoonException('atomic supported under the HTTP procotol only')
+
         if len(keys) < 1:
             self.err.set_error(self.err.LOGIC, 'no keys specified')
             return {}
@@ -199,7 +208,7 @@ class ProtocolHandler(object):
         raise NotImplementedError('supported under the HTTP procotol only')
 
     def set(self, key, value, expire, db):
-        numitems = self.set_bulk({key: value}, expire, True, db)
+        numitems = self.set_bulk({key: value}, expire, False, db)
         return numitems > 0
 
     def add(self, key, value, expire, db):
@@ -209,7 +218,7 @@ class ProtocolHandler(object):
         raise NotImplementedError('supported under the HTTP procotol only')
 
     def remove(self, key, db):
-        numitems = self.remove_bulk([key], True, db)
+        numitems = self.remove_bulk([key], False, db)
         return numitems > 0
 
     def replace(self, key, value, expire, db):

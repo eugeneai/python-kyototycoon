@@ -217,20 +217,20 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle_bin.set('b1', 'yyyy', db=DB_2))
         self.assertTrue(self.kt_handle_bin.set('c1', 'zzzz', db=DB_2))
 
-        d = self.kt_handle_bin.get_bulk(['a', 'b', 'c'], db=DB_1)
+        d = self.kt_handle_bin.get_bulk(['a', 'b', 'c'], db=DB_1, atomic=False)
         self.assertEqual(len(d), 3)
         self.assertEqual(d['a'], 'xxxx')
         self.assertEqual(d['b'], 'yyyy')
         self.assertEqual(d['c'], 'zzzz')
-        d = self.kt_handle_bin.get_bulk(['a', 'b', 'c'], db=DB_2)
+        d = self.kt_handle_bin.get_bulk(['a', 'b', 'c'], db=DB_2, atomic=False)
         self.assertEqual(len(d), 0)
 
-        d = self.kt_handle_bin.get_bulk(['a1', 'b1', 'c1'], db=DB_2)
+        d = self.kt_handle_bin.get_bulk(['a1', 'b1', 'c1'], db=DB_2, atomic=False)
         self.assertEqual(len(d), 3)
         self.assertEqual(d['a1'], 'xxxx')
         self.assertEqual(d['b1'], 'yyyy')
         self.assertEqual(d['c1'], 'zzzz')
-        d = self.kt_handle_bin.get_bulk(['a1', 'b1', 'c1'], db=DB_1)
+        d = self.kt_handle_bin.get_bulk(['a1', 'b1', 'c1'], db=DB_1, atomic=False)
         self.assertEqual(len(d), 0)
 
     def test_remove_bin(self):

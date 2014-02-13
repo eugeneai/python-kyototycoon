@@ -84,7 +84,7 @@ class UnitTest(unittest.TestCase):
             'k7': 111
         }
 
-        n = self.kt_handle.set_bulk(dict)
+        n = self.kt_handle.set_bulk(dict, atomic=False)
         self.assertEqual(len(dict), n)
         self.assertEqual(self.kt_handle.get('k1'), 'one')
         self.assertEqual(self.kt_handle.get('k2'), 'two')
@@ -95,15 +95,15 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(self.kt_handle.get('k7'), 111)
 
         d = self.kt_handle.get_bulk(['k1', 'k2', 'k3', 'k4',
-                                     'k\n5', 'k\t6', 'k7'])
+                                     'k\n5', 'k\t6', 'k7'], atomic=False)
 
         self.assertEqual(len(d), len(dict))
         self.assertEqual(d, dict)
 
         self.assertEqual(self.kt_handle_http.count(), 7)
-        n = self.kt_handle.remove_bulk(['k1', 'k2', 'k\t6'])
+        n = self.kt_handle.remove_bulk(['k1', 'k2', 'k\t6'], atomic=False)
         self.assertEqual(self.kt_handle_http.count(), 4)
-        n = self.kt_handle.remove_bulk(['k3'], atomic=True)
+        n = self.kt_handle.remove_bulk(['k3'], atomic=False)
         self.assertEqual(self.kt_handle_http.count(), 3)
 
     def test_get_bulk(self):
@@ -113,7 +113,7 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.set('c', 'three'))
         self.assertTrue(self.kt_handle.set('d', 'four'))
 
-        d = self.kt_handle.get_bulk(['a','b','c','d'])
+        d = self.kt_handle.get_bulk(['a','b','c','d'], atomic=False)
         assert d is not None
 
         self.assertEqual(d['a'], 'one')
@@ -122,11 +122,11 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(d['d'], 'four')
         self.assertEqual(len(d), 4)
 
-        d = self.kt_handle.get_bulk(['a','x','y','d'])
+        d = self.kt_handle.get_bulk(['a','x','y','d'], atomic=False)
         self.assertEqual(len(d), 2)
-        d = self.kt_handle.get_bulk(['w','x','y','z'])
+        d = self.kt_handle.get_bulk(['w','x','y','z'], atomic=False)
         self.assertEqual(len(d), 0)
-        d = self.kt_handle.get_bulk([])
+        d = self.kt_handle.get_bulk([], atomic=False)
         self.assertEqual(d, {})
 
     def test_large_key(self):

@@ -10,7 +10,7 @@ import struct
 import time
 import sys
 
-from . import kt_error
+from .kt_error import KyotoTycoonError, KyotoTycoonException
 
 from .kt_common import KT_PACKER_CUSTOM, \
                        KT_PACKER_PICKLE, \
@@ -95,7 +95,7 @@ class Cursor(object):
         self.cursor_id = Cursor.cursor_id_counter
         Cursor.cursor_id_counter += 1
 
-        self.err = kt_error.KyotoTycoonError()
+        self.err = KyotoTycoonError()
         self.pack = self.protocol_handler.pack
         self.unpack = self.protocol_handler.unpack
 
@@ -330,11 +330,11 @@ class Cursor(object):
 
 class ProtocolHandler(object):
     def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None, exceptions=False):
-        self.err = kt_error.KyotoTycoonError(exceptions)
+        self.err = KyotoTycoonError(exceptions)
         self.pack_type = pack_type
 
         if pack_type != KT_PACKER_CUSTOM and custom_packer is not None:
-            raise Exception('custom packer object supported for "KT_PACKER_CUSTOM" only')
+            raise KyotoTycoonException('custom packer object supported for "KT_PACKER_CUSTOM" only')
 
         if pack_type == KT_PACKER_PICKLE:
             # Pickle protocol v2 is is used here instead of the default...
@@ -355,13 +355,13 @@ class ProtocolHandler(object):
 
         elif pack_type == KT_PACKER_CUSTOM:
             if custom_packer is None:
-                raise Exception('"KT_PACKER_CUSTOM" requires a packer object')
+                raise KyotoTycoonException('"KT_PACKER_CUSTOM" requires a packer object')
 
             self.pack = custom_packer.pack
             self.unpack = custom_packer.unpack
 
         else:
-            raise Exception('unsupported pack type specified')
+            raise KyotoTycoonException('unsupported pack type specified')
 
     def error(self):
         return self.err
