@@ -426,8 +426,7 @@ class ProtocolHandler(object):
 
     def set_bulk(self, kv_dict, expire, atomic, db):
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
-            self.err.set_error(self.err.LOGIC, 'no key:value pairs specified')
-            return 0
+            return 0  # ...done
 
         path = '/rpc/set_bulk'
         if db:
@@ -453,8 +452,7 @@ class ProtocolHandler(object):
 
     def remove_bulk(self, keys, atomic, db):
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC, 'no keys specified')
-            return 0
+            return 0  # ...done
 
         path = '/rpc/remove_bulk'
         if db:
@@ -483,8 +481,7 @@ class ProtocolHandler(object):
 
     def get_bulk(self, keys, atomic, db):
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC, 'no keys specified')
-            return {}
+            return {}  # ...done
 
         path = '/rpc/get_bulk'
         if db:

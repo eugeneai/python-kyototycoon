@@ -97,8 +97,7 @@ class ProtocolHandler(object):
             raise KyotoTycoonException('atomic supported under the HTTP procotol only')
 
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
-            self.err.set_error(self.err.LOGIC, 'no key:value pairs specified')
-            return 0
+            return 0  # ...done
 
         if expire is None:
             expire = DEFAULT_EXPIRE
@@ -129,8 +128,7 @@ class ProtocolHandler(object):
             raise KyotoTycoonException('atomic supported under the HTTP procotol only')
 
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC, 'no keys specified')
-            return 0
+            return 0  # ...done
 
         if db is None:
             db = 0
@@ -161,8 +159,7 @@ class ProtocolHandler(object):
             raise KyotoTycoonException('atomic supported under the HTTP procotol only')
 
         if len(keys) < 1:
-            self.err.set_error(self.err.LOGIC, 'no keys specified')
-            return {}
+            return {}  # ...done
 
         if db is None:
             db = 0
