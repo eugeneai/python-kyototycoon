@@ -33,8 +33,14 @@ class KyotoTycoon(object):
 
         '''
 
-        protocol = kt_binary if binary else kt_http
-        self.core = protocol.ProtocolHandler(pack_type, custom_packer, exceptions)
+        if binary:
+            self.atomic = False  # The binary protocol does not support atomic operations.
+            self.core = kt_binary.ProtocolHandler(pack_type, custom_packer, exceptions)
+        else:
+            self.atomic = True
+            self.core = kt_http.ProtocolHandler(pack_type, custom_packer, exceptions)
+
+
 
     def error(self):
         '''Return the error state from the last operation.'''
@@ -126,20 +132,20 @@ class KyotoTycoon(object):
 
         return self.core.get_int(key, db)
 
-    def set_bulk(self, kv_dict, expire=None, atomic=True, db=None):
+    def set_bulk(self, kv_dict, expire=None, atomic=None, db=None):
         '''Set the values for several records at once.'''
 
-        return self.core.set_bulk(kv_dict, expire, atomic, db)
+        return self.core.set_bulk(kv_dict, expire, self.atomic if atomic is None else atomic, db)
 
-    def remove_bulk(self, keys, atomic=True, db=None):
+    def remove_bulk(self, keys, atomic=None, db=None):
         '''Remove several records at once.'''
 
-        return self.core.remove_bulk(keys, atomic, db)
+        return self.core.remove_bulk(keys, self.atomic if atomic is None else atomic, db)
 
-    def get_bulk(self, keys, atomic=True, db=None):
+    def get_bulk(self, keys, atomic=None, db=None):
         '''Retrieve the values for several records at once.'''
 
-        return self.core.get_bulk(keys, atomic, db)
+        return self.core.get_bulk(keys, self.atomic if atomic is None else atomic, db)
 
     def vacuum(self, db=None):
         '''Scan the database and eliminate regions of expired records.'''
