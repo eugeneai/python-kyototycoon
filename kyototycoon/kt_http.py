@@ -730,9 +730,8 @@ class ProtocolHandler(object):
             not isinstance(value, unicode_type)):
             raise ValueError('value is not a string or bytes type')
 
-        data = self.get(key)
-        if data is None:
-            data = type(value)()
+        old_data = self.get(key)
+        data = type(value)() if old_data is None else old_data
 
         if (not isinstance(data, bytes_type) and
             not isinstance(data, unicode_type)):
@@ -747,7 +746,8 @@ class ProtocolHandler(object):
 
         data += value
 
-        if self.set(key, data, expire, db) is not True:
+        # This makes the operation atomic...
+        if self.cas(key, old_data, data, expire, db) is not True:
             self.err.set_error(self.err.EMISC, 'error while storing modified value')
             return False
 
