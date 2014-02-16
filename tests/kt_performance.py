@@ -92,39 +92,37 @@ def main():
                                          (KT_PACKER_JSON, "KT_PACKER_JSON"),
                                          (KT_PACKER_STRING, "KT_PACKER_STRING")):
             kt = KyotoTycoon(binary=binary, pack_type=packer_type)
-            kt.open(server["host"], server["port"], timeout=2)
 
-            start = time()
-            bad = 0
+            with kt(server["host"], server["port"], timeout=2) as db:
+                start = time()
+                bad = 0
 
-            for i in range(NUM_ITERATIONS):
-                if is_unicode:
-                    key = "key-%d-u-%d-%d-café" % (binary, packer_type, i)
-                    value = "value-%d-u-%d-%d-café" % (binary, packer_type, i)
-                else:
-                    key = "key-%d-s-%d-%d-cafe" % (binary, packer_type, i)
-                    value = "value-%d-s-%d-%d-cafe" % (binary, packer_type, i)
+                for i in range(NUM_ITERATIONS):
+                    if is_unicode:
+                        key = "key-%d-u-%d-%d-café" % (binary, packer_type, i)
+                        value = "value-%d-u-%d-%d-café" % (binary, packer_type, i)
+                    else:
+                        key = "key-%d-s-%d-%d-cafe" % (binary, packer_type, i)
+                        value = "value-%d-s-%d-%d-cafe" % (binary, packer_type, i)
 
-                kt.set(key, value)
-                output = kt.get(key)
+                    db.set(key, value)
+                    output = db.get(key)
 
-                if output != value:
-                    bad += 1
+                    if output != value:
+                        bad += 1
 
-                kt.remove(key)
-                output = kt.get(key)
+                    db.remove(key)
+                    output = db.get(key)
 
-                if output is not None:
-                    bad += 1
+                    if output is not None:
+                        bad += 1
 
-            duration = time() - start
-            rate = NUM_ITERATIONS / duration
+                duration = time() - start
+                rate = NUM_ITERATIONS / duration
 
-            print("%-15s | %-16s | %-16s | %5.2f s | %10.2f ips | %-6s" %
-                  (binary, is_unicode, packer_name, duration, rate,
-                   "No" if bad > 0 else "Yes"))
-
-            kt.close()
+                print("%-15s | %-16s | %-16s | %5.2f s | %10.2f ips | %-6s" %
+                      (binary, is_unicode, packer_name, duration, rate,
+                       "No" if bad > 0 else "Yes"))
 
 
 if __name__ == "__main__":

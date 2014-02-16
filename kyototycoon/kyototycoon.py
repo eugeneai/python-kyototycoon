@@ -40,7 +40,14 @@ class KyotoTycoon(object):
             self.atomic = True
             self.core = kt_http.ProtocolHandler(pack_type, custom_packer, exceptions)
 
+    def __call__(self, *args, **kwargs):
+        return self if self.open(*args, **kwargs) else None
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.close()
 
     def error(self):
         '''Return the error state from the last operation.'''
