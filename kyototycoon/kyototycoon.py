@@ -40,9 +40,6 @@ class KyotoTycoon(object):
             self.atomic = True
             self.core = kt_http.ProtocolHandler(pack_type, custom_packer, exceptions)
 
-    def __call__(self, *args, **kwargs):
-        return self if self.open(*args, **kwargs) else None
-
     def __enter__(self):
         return self
 
@@ -57,7 +54,18 @@ class KyotoTycoon(object):
     def open(self, host=KT_DEFAULT_HOST, port=KT_DEFAULT_PORT, timeout=KT_DEFAULT_TIMEOUT):
         '''Open a new connection to a KT server.'''
 
-        return self.core.open(host, port, timeout)
+        return True if self.core.open(host, port, timeout) else False
+
+    def connect(self, *args, **kwargs):
+        '''
+        Open a new connection to a KT server.
+
+        The same as "open()" but returning "self" instead of a boolean, allowing
+        KyotoTycoon objects to be used as context managers in "with" statements.
+
+        '''
+
+        return self if self.open(*args, **kwargs) else None
 
     def close(self):
         '''Close an open connection to the KT server.'''

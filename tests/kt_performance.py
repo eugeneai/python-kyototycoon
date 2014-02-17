@@ -93,7 +93,7 @@ def main():
                                          (KT_PACKER_STRING, "KT_PACKER_STRING")):
             kt = KyotoTycoon(binary=binary, pack_type=packer_type)
 
-            with kt(server["host"], server["port"], timeout=2) as db:
+            with kt.connect(server["host"], server["port"], timeout=2) as db:
                 start = time()
                 bad = 0
 
