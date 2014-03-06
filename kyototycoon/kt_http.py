@@ -40,10 +40,7 @@ try:
 except ImportError:
     import pickle
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
+import json
 
 KT_HTTP_HEADER = {'Content-Type' : 'text/tab-separated-values; colenc=U'}
 

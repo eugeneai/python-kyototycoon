@@ -25,10 +25,7 @@ try:
 except ImportError:
     import pickle
 
-try:
-    import simplejson as json
-except ImportError:
-    import json
+import json
 
 MB_SET_BULK = 0xb8
 MB_GET_BULK = 0xba
