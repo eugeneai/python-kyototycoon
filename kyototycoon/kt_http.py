@@ -51,7 +51,7 @@ def _dict_to_tsv(kv_dict):
         lines.append('%s\t%s' % (quote(k.encode('utf-8')), quoted))
     return '\n'.join(lines)
 
-def _content_type_decoder(content_type=''):
+def _content_type_decoder(content_type):
     '''Select the appropriate decoding function to use based on the response headers.'''
 
     if content_type.endswith('colenc=B'):
@@ -62,7 +62,7 @@ def _content_type_decoder(content_type=''):
 
     return lambda x: x
 
-def _tsv_to_dict(tsv_str, content_type=''):
+def _tsv_to_dict(tsv_str, content_type):
     decode = _content_type_decoder(content_type)
     rv = {}
 
@@ -72,15 +72,14 @@ def _tsv_to_dict(tsv_str, content_type=''):
             rv[decode(kv[0])] = decode(kv[1])
     return rv
 
-def _tsv_to_list(tsv_str, content_type=''):
+def _tsv_to_list(tsv_str, content_type):
     decode = _content_type_decoder(content_type)
     rv = []
 
     for row in tsv_str.split(b'\n'):
         kv = row.split(b'\t')
         if len(kv) == 2:
-            pair = (decode(kv[0]), decode(kv[1]))
-            rv.append(pair)
+            rv.append([decode(kv[0]), decode(kv[1])])
     return rv
 
 
@@ -99,17 +98,15 @@ class Cursor(object):
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, tb):
+    def __exit__(self, type, value, traceback):
         # Cleanup the cursor when leaving "with" blocks...
         self.delete()
 
     def jump(self, key=None, db=0):
         '''Jump the cursor to a record (first record if "None") for forward scan.'''
 
-        path = '/rpc/cur_jump'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/cur_jump?DB=' + db
 
         request_dict = {'CUR': self.cursor_id}
         if key:
@@ -129,10 +126,8 @@ class Cursor(object):
     def jump_back(self, key=None, db=0):
         '''Jump the cursor to a record (last record if "None") for forward scan.'''
 
-        path = '/rpc/cur_jump_back'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path += '/rpc/cur_jump_back?DB=' + db
 
         request_dict = {'CUR': self.cursor_id}
         if key:
@@ -402,12 +397,10 @@ class ProtocolHandler(object):
         return True
 
     def get(self, key, db=0):
-        key = quote(key.encode('utf-8'))
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            key = '/%s/%s' % (db, key)
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
-        self.conn.request('GET', key)
+        self.conn.request('GET', path)
         res, body = self.getresponse()
 
         if res.status == 404:
@@ -425,17 +418,15 @@ class ProtocolHandler(object):
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
             return 0  # ...done
 
-        path = '/rpc/set_bulk'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/set_bulk?DB=' + db
 
         request_body = ['atomic\t\n' if atomic else '']
 
-        for k, v in kv_dict.items():
-            k = quote(k.encode('utf-8'))
-            v = quote(self.pack(v))
-            request_body.append('_%s\t%s\n' % (k, v))
+        for key, value in kv_dict.items():
+            key = quote(key.encode('utf-8'))
+            value = quote(self.pack(value))
+            request_body.append('_%s\t%s\n' % (key, value))
 
         self.conn.request('POST', path, body=''.join(request_body), headers=KT_HTTP_HEADER)
 
@@ -451,10 +442,8 @@ class ProtocolHandler(object):
         if len(keys) < 1:
             return 0  # ...done
 
-        path = '/rpc/remove_bulk'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/remove_bulk?DB=' + db
 
         request_body = ['atomic\t\n' if atomic else '']
 
@@ -480,10 +469,8 @@ class ProtocolHandler(object):
         if len(keys) < 1:
             return {}  # ...done
 
-        path = '/rpc/get_bulk'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/get_bulk?DB=' + db
 
         request_body = ['atomic\t\n' if atomic else '']
 
@@ -513,12 +500,10 @@ class ProtocolHandler(object):
         return rv
 
     def get_int(self, key, db=0):
-        key = quote(key.encode('utf-8'))
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            key = '/%s/%s' % (db, key)
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
-        self.conn.request('GET', key)
+        self.conn.request('GET', path)
 
         res, body = self.getresponse()
         if res.status != 200:
@@ -529,10 +514,8 @@ class ProtocolHandler(object):
         return struct.unpack('>q', body)[0]
 
     def vacuum(self, db=0):
-        path = '/rpc/vacuum'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/vacuum?DB=' + db
 
         self.conn.request('GET', path)
 
@@ -549,10 +532,8 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC, 'no key prefix specified')
             return None
 
-        path = '/rpc/match_prefix'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/match_prefix?DB=' + db
 
         request_dict = {'prefix': prefix.encode('utf-8')}
         if limit:
@@ -587,10 +568,8 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC, 'no regular expression specified')
             return None
 
-        path = '/rpc/match_regex'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/match_regex?DB=' + db
 
         request_dict = {'regex': regex.encode('utf-8')}
         if limit:
@@ -621,13 +600,11 @@ class ProtocolHandler(object):
         return rv
 
     def set(self, key, value, expire, db=0):
-        key = quote(key.encode('utf-8'))
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            key = '/%s/%s' % (db, key)
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
         value = self.pack(value)
-        status = self._rest_put('set', key, value, expire)
+        status = self._rest_put('set', path, value, expire)
         if status != 201:
             self.err.set_error(self.err.EMISC)
             return False
@@ -636,13 +613,11 @@ class ProtocolHandler(object):
         return True
 
     def add(self, key, value, expire, db=0):
-        key = quote(key.encode('utf-8'))
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            key = '/%s/%s' % (db, key)
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
         value = self.pack(value)
-        status = self._rest_put('add', key, value, expire)
+        status = self._rest_put('add', path, value, expire)
         if status != 201:
             self.err.set_error(self.err.EMISC)
             return False
@@ -655,10 +630,8 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC, 'old value and/or new value must be specified')
             return False
 
-        path = '/rpc/cas'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/cas?DB=' + db
 
         request_dict = {'key': key.encode('utf-8')}
 
@@ -684,12 +657,10 @@ class ProtocolHandler(object):
         return True
 
     def remove(self, key, db=0):
-        key = quote(key.encode('utf-8'))
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            key = '/%s/%s' % (db, key)
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
-        self.conn.request('DELETE', key)
+        self.conn.request('DELETE', path)
 
         res, body = self.getresponse()
         if res.status != 204:
@@ -700,13 +671,11 @@ class ProtocolHandler(object):
         return True
 
     def replace(self, key, value, expire, db=0):
-        key = quote(key.encode('utf-8'))
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            key = '/%s/%s' % (db, key)
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
         value = self.pack(value)
-        status = self._rest_put('replace', key, value, expire)
+        status = self._rest_put('replace', path, value, expire)
         if status != 201:
             self.err.set_error(self.err.NOTFOUND)
             return False
@@ -752,10 +721,8 @@ class ProtocolHandler(object):
         return True
 
     def increment(self, key, delta, expire, db=0):
-        path = '/rpc/increment'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/increment?DB=' + db
 
         request_body = 'key\t%s\nnum\t%d\n' % (key, delta)
         self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -773,10 +740,8 @@ class ProtocolHandler(object):
             self.err.set_error(self.err.LOGIC, 'no key specified')
             return False
 
-        path = '/rpc/increment_double'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/increment_double?DB=' + db
 
         request_body = 'key\t%s\nnum\t%f\n' % (key, delta)
         self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -805,10 +770,8 @@ class ProtocolHandler(object):
         return report_dict
 
     def status(self, db=0):
-        path = '/rpc/status'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/status?DB=' + db
 
         self.conn.request('GET', path)
         res, body = self.getresponse()
@@ -825,10 +788,8 @@ class ProtocolHandler(object):
         return status_dict
 
     def clear(self, db=0):
-        path = '/rpc/clear'
-        if db:
-            db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-            path += '?DB=' + db
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/clear?DB=' + db
 
         self.conn.request('GET', path)
         res, body = self.getresponse()
