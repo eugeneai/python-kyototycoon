@@ -77,105 +77,105 @@ class KyotoTycoon(object):
 
         return self.core.report()
 
-    def status(self, db=None):
+    def status(self, db=0):
         '''Get status information for the database.'''
 
         return self.core.status(db)
 
-    def clear(self, db=None):
+    def clear(self, db=0):
         '''Remove all records in the database.'''
 
         return self.core.clear(db)
 
-    def count(self, db=None):
+    def count(self, db=0):
         '''Number of records in the database.'''
 
         return self.core.count(db)
 
-    def size(self, db=None):
+    def size(self, db=0):
         '''Current database size (in bytes).'''
 
         return self.core.size(db)
 
-    def set(self, key, value, expire=None, db=None):
+    def set(self, key, value, expire=None, db=0):
         '''Set the value for a record.'''
 
         return self.core.set(key, value, expire, db)
 
-    def add(self, key, value, expire=None, db=None):
+    def add(self, key, value, expire=None, db=0):
         '''Set the value for a record (does nothing if the record already exists).'''
 
         return self.core.add(key, value, expire, db)
 
-    def replace(self, key, value, expire=None, db=None):
+    def replace(self, key, value, expire=None, db=0):
         '''Replace the value of an existing record.'''
 
         return self.core.replace(key, value, expire, db)
 
-    def append(self, key, value, expire=None, db=None):
+    def append(self, key, value, expire=None, db=0):
         '''Append "value" to the string value of a record.'''
 
         return self.core.append(key, value, expire, db)
 
-    def increment(self, key, delta, expire=None, db=None):
+    def increment(self, key, delta, expire=None, db=0):
         '''Add "delta" to the numeric integer value of a record.'''
 
         return self.core.increment(key, delta, expire, db)
 
-    def increment_double(self, key, delta, expire=None, db=None):
+    def increment_double(self, key, delta, expire=None, db=0):
         '''Add "delta" to the numeric double value of a record.'''
 
         return self.core.increment_double(key, delta, expire, db)
 
-    def cas(self, key, old_val=None, new_val=None, expire=None, db=None):
+    def cas(self, key, old_val=None, new_val=None, expire=None, db=0):
         '''If the old value of a record is "old_val", replace it with "new_val".'''
 
         return self.core.cas(key, old_val, new_val, expire, db)
 
-    def remove(self, key, db=None):
+    def remove(self, key, db=0):
         '''Remove a record.'''
 
         return self.core.remove(key, db)
 
-    def get(self, key, db=None):
+    def get(self, key, db=0):
         '''Retrieve the value for a record.'''
 
         return self.core.get(key, db)
 
-    def get_int(self, key, db=None):
+    def get_int(self, key, db=0):
         '''Retrieve the numeric integer value for a record.'''
 
         return self.core.get_int(key, db)
 
-    def set_bulk(self, kv_dict, expire=None, atomic=None, db=None):
+    def set_bulk(self, kv_dict, expire=None, atomic=None, db=0):
         '''Set the values for several records at once.'''
 
         return self.core.set_bulk(kv_dict, expire, self.atomic if atomic is None else atomic, db)
 
-    def remove_bulk(self, keys, atomic=None, db=None):
+    def remove_bulk(self, keys, atomic=None, db=0):
         '''Remove several records at once.'''
 
         return self.core.remove_bulk(keys, self.atomic if atomic is None else atomic, db)
 
-    def get_bulk(self, keys, atomic=None, db=None):
+    def get_bulk(self, keys, atomic=None, db=0):
         '''Retrieve the values for several records at once.'''
 
         return self.core.get_bulk(keys, self.atomic if atomic is None else atomic, db)
 
-    def vacuum(self, db=None):
+    def vacuum(self, db=0):
         '''Scan the database and eliminate regions of expired records.'''
 
         return self.core.vacuum(db)
 
-    def match_prefix(self, prefix, max=None, db=None):
+    def match_prefix(self, prefix, limit=None, db=0):
         '''Get keys matching a prefix string.'''
 
-        return self.core.match_prefix(prefix, max, db)
+        return self.core.match_prefix(prefix, limit, db)
 
-    def match_regex(self, regex, max=None, db=None):
+    def match_regex(self, regex, limit=None, db=0):
         '''Get keys matching a ragular expression string.'''
 
-        return self.core.match_regex(regex, max, db)
+        return self.core.match_regex(regex, limit, db)
 
     def cursor(self):
         '''Obtain a new (uninitialized) record cursor.'''

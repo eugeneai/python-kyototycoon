@@ -44,9 +44,9 @@ import json
 
 KT_HTTP_HEADER = {'Content-Type' : 'text/tab-separated-values; colenc=U'}
 
-def _dict_to_tsv(dict):
+def _dict_to_tsv(kv_dict):
     lines = []
-    for k, v in dict.items():
+    for k, v in kv_dict.items():
         quoted = quote_from_bytes(v) if isinstance(v, bytes) else quote(str(v))
         lines.append('%s\t%s' % (quote(k.encode('utf-8')), quoted))
     return '\n'.join(lines)
@@ -103,7 +103,7 @@ class Cursor(object):
         # Cleanup the cursor when leaving "with" blocks...
         self.delete()
 
-    def jump(self, key=None, db=None):
+    def jump(self, key=None, db=0):
         '''Jump the cursor to a record (first record if "None") for forward scan.'''
 
         path = '/rpc/cur_jump'
@@ -126,7 +126,7 @@ class Cursor(object):
         self.err.set_success()
         return True
 
-    def jump_back(self, key=None, db=None):
+    def jump_back(self, key=None, db=0):
         '''Jump the cursor to a record (last record if "None") for forward scan.'''
 
         path = '/rpc/cur_jump_back'
@@ -401,7 +401,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def get(self, key, db=None):
+    def get(self, key, db=0):
         key = quote(key.encode('utf-8'))
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -421,7 +421,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return self.unpack(body)
 
-    def set_bulk(self, kv_dict, expire, atomic, db):
+    def set_bulk(self, kv_dict, expire, atomic, db=0):
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
             return 0  # ...done
 
@@ -447,7 +447,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
-    def remove_bulk(self, keys, atomic, db):
+    def remove_bulk(self, keys, atomic, db=0):
         if len(keys) < 1:
             return 0  # ...done
 
@@ -476,7 +476,7 @@ class ProtocolHandler(object):
 
         return count
 
-    def get_bulk(self, keys, atomic, db):
+    def get_bulk(self, keys, atomic, db=0):
         if len(keys) < 1:
             return {}  # ...done
 
@@ -512,7 +512,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return rv
 
-    def get_int(self, key, db=None):
+    def get_int(self, key, db=0):
         key = quote(key.encode('utf-8'))
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -528,7 +528,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return struct.unpack('>q', body)[0]
 
-    def vacuum(self, db):
+    def vacuum(self, db=0):
         path = '/rpc/vacuum'
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -544,7 +544,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def match_prefix(self, prefix, max, db):
+    def match_prefix(self, prefix, limit, db=0):
         if prefix is None:
             self.err.set_error(self.err.LOGIC, 'no key prefix specified')
             return None
@@ -555,8 +555,8 @@ class ProtocolHandler(object):
             path += '?DB=' + db
 
         request_dict = {'prefix': prefix.encode('utf-8')}
-        if max:
-            request_dict['max'] = max
+        if limit:
+            request_dict['max'] = limit
 
         request_body = _dict_to_tsv(request_dict)
         self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -582,7 +582,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return rv
 
-    def match_regex(self, regex, max, db):
+    def match_regex(self, regex, limit, db=0):
         if regex is None:
             self.err.set_error(self.err.LOGIC, 'no regular expression specified')
             return None
@@ -593,8 +593,8 @@ class ProtocolHandler(object):
             path += '?DB=' + db
 
         request_dict = {'regex': regex.encode('utf-8')}
-        if max:
-            request_dict['max'] = max
+        if limit:
+            request_dict['max'] = limit
 
         request_body = _dict_to_tsv(request_dict)
         self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
@@ -620,7 +620,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return rv
 
-    def set(self, key, value, expire, db):
+    def set(self, key, value, expire, db=0):
         key = quote(key.encode('utf-8'))
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -635,7 +635,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def add(self, key, value, expire, db):
+    def add(self, key, value, expire, db=0):
         key = quote(key.encode('utf-8'))
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -650,7 +650,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def cas(self, key, old_val, new_val, expire, db):
+    def cas(self, key, old_val, new_val, expire, db=0):
         if old_val is None and new_val is None:
             self.err.set_error(self.err.LOGIC, 'old value and/or new value must be specified')
             return False
@@ -683,7 +683,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def remove(self, key, db):
+    def remove(self, key, db=0):
         key = quote(key.encode('utf-8'))
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -699,7 +699,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def replace(self, key, value, expire, db):
+    def replace(self, key, value, expire, db=0):
         key = quote(key.encode('utf-8'))
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -714,7 +714,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def append(self, key, value, expire, db):
+    def append(self, key, value, expire, db=0):
         # Simultaneous support for Python 2/3 makes this cumbersome...
         if sys.version_info[0] >= 3:
             bytes_type = bytes
@@ -751,7 +751,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def increment(self, key, delta, expire, db):
+    def increment(self, key, delta, expire, db=0):
         path = '/rpc/increment'
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -768,7 +768,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
-    def increment_double(self, key, delta, expire, db):
+    def increment_double(self, key, delta, expire, db=0):
         if key is None:
             self.err.set_error(self.err.LOGIC, 'no key specified')
             return False
@@ -804,7 +804,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return report_dict
 
-    def status(self, db=None):
+    def status(self, db=0):
         path = '/rpc/status'
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -824,7 +824,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return status_dict
 
-    def clear(self, db=None):
+    def clear(self, db=0):
         path = '/rpc/clear'
         if db:
             db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
@@ -839,11 +839,11 @@ class ProtocolHandler(object):
         self.err.set_success()
         return True
 
-    def count(self, db=None):
+    def count(self, db=0):
         st = self.status(db)
         return None if st is None else int(st['count'])
 
-    def size(self, db=None):
+    def size(self, db=0):
         st = self.status(db)
         return None if st is None else int(st['size'])
 

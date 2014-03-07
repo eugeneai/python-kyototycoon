@@ -85,11 +85,11 @@ class ProtocolHandler(object):
         self.socket.close()
         return True
 
-    def get(self, key, db=None):
+    def get(self, key, db=0):
         values = self.get_bulk([key], False, db)
         return values[key] if values else None
 
-    def set_bulk(self, kv_dict, expire, atomic, db):
+    def set_bulk(self, kv_dict, expire, atomic, db=0):
         if atomic:
             raise KyotoTycoonException('atomic supported under the HTTP procotol only')
 
@@ -120,7 +120,7 @@ class ProtocolHandler(object):
         self.err.set_success()
         return num_items
 
-    def remove_bulk(self, keys, atomic, db):
+    def remove_bulk(self, keys, atomic, db=0):
         if atomic:
             raise KyotoTycoonException('atomic supported under the HTTP procotol only')
 
@@ -151,7 +151,7 @@ class ProtocolHandler(object):
 
         return num_items
 
-    def get_bulk(self, keys, atomic, db):
+    def get_bulk(self, keys, atomic, db=0):
         if atomic:
             raise KyotoTycoonException('atomic supported under the HTTP procotol only')
 
@@ -189,57 +189,57 @@ class ProtocolHandler(object):
 
         return items
 
-    def get_int(self, key, db=None):
+    def get_int(self, key, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def vacuum(self, db):
+    def vacuum(self, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def match_prefix(self, prefix, max, db):
+    def match_prefix(self, prefix, limit, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def match_regex(self, regex, max, db):
+    def match_regex(self, regex, limit, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def set(self, key, value, expire, db):
+    def set(self, key, value, expire, db=0):
         numitems = self.set_bulk({key: value}, expire, False, db)
         return numitems > 0
 
-    def add(self, key, value, expire, db):
+    def add(self, key, value, expire, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def cas(self, key, old_val, new_val, expire, db):
+    def cas(self, key, old_val, new_val, expire, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def remove(self, key, db):
+    def remove(self, key, db=0):
         numitems = self.remove_bulk([key], False, db)
         return numitems > 0
 
-    def replace(self, key, value, expire, db):
+    def replace(self, key, value, expire, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def append(self, key, value, expire, db):
+    def append(self, key, value, expire, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def increment(self, key, delta, expire, db):
+    def increment(self, key, delta, expire, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def increment_double(self, key, delta, expire, db):
+    def increment_double(self, key, delta, expire, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
     def report(self):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def status(self, db=None):
+    def status(self, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def clear(self, db=None):
+    def clear(self, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def count(self, db=None):
+    def count(self, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def size(self, db=None):
+    def size(self, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
     def play_script(self, name, kv_dict=None):
