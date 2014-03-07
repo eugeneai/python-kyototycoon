@@ -99,9 +99,6 @@ class ProtocolHandler(object):
         if expire is None:
             expire = DEFAULT_EXPIRE
 
-        if db is None:
-            db = 0
-
         request = [struct.pack('!BII', MB_SET_BULK, 0, len(kv_dict))]
 
         for key, value in kv_dict.items():
@@ -126,9 +123,6 @@ class ProtocolHandler(object):
 
         if len(keys) < 1:
             return 0  # ...done
-
-        if db is None:
-            db = 0
 
         request = [struct.pack('!BII', MB_REMOVE_BULK, 0, len(keys))]
 
@@ -157,9 +151,6 @@ class ProtocolHandler(object):
 
         if len(keys) < 1:
             return {}  # ...done
-
-        if db is None:
-            db = 0
 
         request = [struct.pack('!BII', MB_GET_BULK, 0, len(keys))]
 
