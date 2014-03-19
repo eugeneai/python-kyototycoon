@@ -1,25 +1,17 @@
 ABOUT
 -----
-This is a native Python client library for Kyoto Tycoon.
-For more information on Kyoto Tycoon please refer to the
-official project website:
+This is a native Python client library for the Kyoto Tycoon server,
+supporting both Python 2 and 3. It includes significant performance
+improvements and bug fixes over the (now seemingly unmaintained)
+original library by Toru Maesaka and Stephen Hamer.
+
+For more information on Kyoto Tycoon server, please refer to:
 
   http://fallabs.com/kyototycoon/
 
-This library's interface follows the preferred interface
-provided by Kyoto Tycoon's original author(s):
 
-  http://fallabs.com/kyototycoon/kyototycoon.idl
-
-There is currently no documentation for this software but, in
-the meantime, please see the file "kyototycoon.py" for the
-interface.
-
-This library includes cursor support and significant performance
-improvements over the (now unmaintained) original library by
-Toru Maesaka. It also supports unicode keys and works with both
-Python 2 and 3.
-
+FEATURES
+--------
 The more efficient binary protocol is also supported along with
 the HTTP protocol. It provides a performance improvement of up
 to 6x, but only the following operations are available:
@@ -59,32 +51,24 @@ once. The caller will most likely know the type of data that
 the called script returns and must do the marshalling itself.
 
 
+COMPATIBILITY
+-------------
+This library is still not at version 1.0, which means the API and
+behavior are not guaranteed to remain consistent between versions.
+
+Support for using an error object has been removed. If you need
+the old behavior for compatibility reasons, use a version up to
+(and including) v0.5.9. Versions later than this raise exceptions
+on all Kyoto Tycoon errors.
+
+
+
 INSTALLATION
 ------------
 You can install the latest version of this library from source::
 
     python setup.py build
     python setup.py install
-
-A version of this library is available from PyPI, although it may
-not always be the latest and greatest version. You can find it at:
-
-  https://pypi.python.org/pypi/python-kyototycoon/
-
-You can install packages directly from PyPI using ``pip``::
-
-    pip install python-kyototycoon
-
-This library is still not at version 1.0, which means the API and
-behavior are not guaranteed to remain consistent between versions.
-If you require a specific version consider using versioning with
-``pip``. For example::
-
-    pip install python-kyototycoon==0.4.6
-
-This is ideal for use with any automatic scripts you may be using
-to build/deploy your application.
-
 
 AUTHORS
 -------
