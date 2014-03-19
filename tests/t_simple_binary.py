@@ -22,10 +22,8 @@ class UnitTest(unittest.TestCase):
 
     def test_set(self):
         self.assertTrue(self.kt_handle_http.clear())
-        error = self.kt_handle.error()
 
         self.assertTrue(self.kt_handle.set('key', 'value'))
-        self.assertEqual(error.code(), error.SUCCESS)
 
         self.assertTrue(self.kt_handle.set('k e y', 'v a l u e'))
         self.assertTrue(self.kt_handle.set('k\te\ty', 'tabbed'))
@@ -50,26 +48,19 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.set('https://github.com/blog/', 'url3'))
 
         self.assertEqual(self.kt_handle.get('non_existent'), None)
-        self.assertEqual(error.code(), error.NOTFOUND)
 
         self.assertTrue(self.kt_handle.set('cb', 1791))
-        self.assertEqual(error.code(), error.SUCCESS)
         self.assertEqual(self.kt_handle.get('cb'), 1791)
-        self.assertEqual(error.code(), error.SUCCESS)
 
         self.assertTrue(self.kt_handle.set('cb', 1791.1226))
         self.assertEqual(self.kt_handle.get('cb'), 1791.1226)
 
     def test_remove(self):
         self.assertTrue(self.kt_handle_http.clear())
-        error = self.kt_handle.error()
 
         self.assertFalse(self.kt_handle.remove('must fail key'))
-        self.assertEqual(error.code(), error.NOTFOUND)
         self.assertTrue(self.kt_handle.set('deleteable key', 'xxx'))
-        self.assertEqual(error.code(), error.SUCCESS)
         self.assertTrue(self.kt_handle.remove('deleteable key'))
-        self.assertEqual(error.code(), error.SUCCESS)
 
     def test_set_bulk(self):
         self.assertTrue(self.kt_handle_http.clear())
@@ -133,12 +124,6 @@ class UnitTest(unittest.TestCase):
         large_key = 'x' * self.LARGE_KEY_LEN
         self.assertTrue(self.kt_handle.set(large_key, 'value'))
         self.assertEqual(self.kt_handle.get(large_key), 'value')
-
-    def test_error(self):
-        self.assertTrue(self.kt_handle_http.clear())
-        kt_error = self.kt_handle.error()
-        assert kt_error is not None
-        self.assertEqual(kt_error.code(), kt_error.SUCCESS)
 
 
 if __name__ == '__main__':

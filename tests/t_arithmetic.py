@@ -7,7 +7,7 @@
 
 import config
 import unittest
-from kyototycoon import KyotoTycoon
+from kyototycoon import KyotoTycoon, KyotoTycoonException
 
 class UnitTest(unittest.TestCase):
     def setUp(self):
@@ -27,8 +27,7 @@ class UnitTest(unittest.TestCase):
 
         # Incrementing against a non numeric value. Must fail.
         self.assertTrue(self.kt_handle.set(key, 'foo'))
-        self.assertEqual(self.kt_handle.increment(key, 10), None)
-        self.assertEqual(self.kt_handle.increment(key, 10), None)
+        self.assertRaises(KyotoTycoonException, self.kt_handle.increment, key, 10)
 
     def test_increment_double(self):
         self.assertTrue(self.kt_handle.clear())

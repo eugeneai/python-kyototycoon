@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .kyototycoon import KyotoTycoon, \
-                         KT_DEFAULT_HOST, \
-                         KT_DEFAULT_PORT, \
-                         KT_DEFAULT_TIMEOUT
+from .kyototycoon import KyotoTycoon
 
 from .kt_common import KT_PACKER_CUSTOM, \
                        KT_PACKER_PICKLE, \

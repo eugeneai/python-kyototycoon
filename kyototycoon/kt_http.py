@@ -10,7 +10,7 @@ import struct
 import time
 import sys
 
-from .kt_error import KyotoTycoonError, KyotoTycoonException
+from .kt_error import KyotoTycoonException
 
 from .kt_common import KT_PACKER_CUSTOM, \
                        KT_PACKER_PICKLE, \
@@ -91,7 +91,6 @@ class Cursor(object):
         self.cursor_id = Cursor.cursor_id_counter
         Cursor.cursor_id_counter += 1
 
-        self.err = KyotoTycoonError()
         self.pack = self.protocol_handler.pack
         self.unpack = self.protocol_handler.unpack
 
@@ -117,10 +116,8 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def jump_back(self, key=None, db=0):
@@ -138,10 +135,8 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def step(self):
@@ -153,11 +148,13 @@ class Cursor(object):
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
-        if res.status != 200:
-            self.err.set_error(self.err.EMISC)
+        if res.status == 450:
+            # Since this is normal while iterating, do not raise an exception...
             return False
 
-        self.err.set_success()
+        if res.status != 200:
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
+
         return True
 
     def step_back(self):
@@ -169,11 +166,13 @@ class Cursor(object):
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
-        if res.status != 200:
-            self.err.set_error(self.err.EMISC)
+        if res.status == 450:
+            # Since this is normal while iterating, do not raise an exception...
             return False
 
-        self.err.set_success()
+        if res.status != 200:
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
+
         return True
 
     def set_value(self, value, step=False, expire=None):
@@ -193,10 +192,8 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def remove(self):
@@ -209,10 +206,8 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def get_key(self, step=False):
@@ -229,10 +224,8 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return _tsv_to_dict(body, res.getheader('Content-Type', ''))[b'key'].decode('utf-8')
 
     def get_value(self, step=False):
@@ -249,10 +242,8 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return self.unpack(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'value'])
 
     def get(self, step=False):
@@ -269,18 +260,15 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status == 404:
-            self.err.set_error(self.err.NOTFOUND)
             return None, None
 
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False, False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         key = res_dict[b'key'].decode('utf-8')
         value = self.unpack(res_dict[b'value'])
 
-        self.err.set_success()
         return key, value
 
     def seize(self):
@@ -293,14 +281,12 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         seize_dict = {'key': res_dict[b'key'].decode('utf-8'),
                       'value': self.unpack(res_dict[b'value'])}
 
-        self.err.set_success()
         return seize_dict
 
     def delete(self):
@@ -313,16 +299,13 @@ class Cursor(object):
 
         res, body = self.protocol_handler.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
 
 class ProtocolHandler(object):
-    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None, exceptions=False):
-        self.err = KyotoTycoonError(exceptions)
+    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None):
         self.pack_type = pack_type
 
         if pack_type != KT_PACKER_CUSTOM and custom_packer is not None:
@@ -390,10 +373,8 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-           self.err.set_error(self.err.EMISC)
-           return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def get(self, key, db=0):
@@ -404,14 +385,11 @@ class ProtocolHandler(object):
         res, body = self.getresponse()
 
         if res.status == 404:
-            self.err.set_error(self.err.NOTFOUND)
             return None
 
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return self.unpack(body)
 
     def set_bulk(self, kv_dict, expire, atomic, db=0):
@@ -432,10 +410,9 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
+        # Number of items set...
         return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def remove_bulk(self, keys, atomic, db=0):
@@ -454,16 +431,10 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        count = int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
-        if count > 0:
-            self.err.set_success()
-        else:
-            self.err.set_error(self.err.NOTFOUND)
-
-        return count
+        # Number of items removed...
+        return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def get_bulk(self, keys, atomic, db=0):
         if len(keys) < 1:
@@ -481,22 +452,19 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         rv = {}
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         n = res_dict.pop(b'num')
 
         if n == '0':
-            self.err.set_error(self.err.NOTFOUND)
             return {}
 
         for k, v in res_dict.items():
             if v is not None:
                 rv[k.decode('utf-8')[1:]] = self.unpack(v)
 
-        self.err.set_success()
         return rv
 
     def get_int(self, key, db=0):
@@ -507,10 +475,8 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.NOTFOUND)
-            return None
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return struct.unpack('>q', body)[0]
 
     def vacuum(self, db=0):
@@ -521,16 +487,13 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def match_prefix(self, prefix, limit, db=0):
         if prefix is None:
-            self.err.set_error(self.err.LOGIC, 'no key prefix specified')
-            return None
+            raise ValueError('no key prefix specified')
 
         db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
         path = '/rpc/match_prefix?DB=' + db
@@ -544,29 +507,25 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         rv = []
         res_list = _tsv_to_list(body, res.getheader('Content-Type', ''))
         if len(res_list) == 0 or res_list[-1][0] != b'num':
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('server returned no data')
+
         num_key, num = res_list.pop()
         if num == '0':
-            self.err.set_error(self.err.NOTFOUND)
             return []
 
         for k, v in res_list:
             rv.append(k.decode('utf-8')[1:])
 
-        self.err.set_success()
         return rv
 
     def match_regex(self, regex, limit, db=0):
         if regex is None:
-            self.err.set_error(self.err.LOGIC, 'no regular expression specified')
-            return None
+            raise ValueError('no regular expression specified')
 
         db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
         path = '/rpc/match_regex?DB=' + db
@@ -580,23 +539,20 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         rv = []
         res_list = _tsv_to_list(body, res.getheader('Content-Type', ''))
         if len(res_list) == 0 or res_list[-1][0] != b'num':
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('server returned no data')
+
         num_key, num = res_list.pop()
         if num == '0':
-            self.err.set_error(self.err.NOTFOUND)
             return []
 
         for k, v in res_list:
             rv.append(k.decode('utf-8')[1:])
 
-        self.err.set_success()
         return rv
 
     def set(self, key, value, expire, db=0):
@@ -606,10 +562,8 @@ class ProtocolHandler(object):
         value = self.pack(value)
         status = self._rest_put('set', path, value, expire)
         if status != 201:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % status)
 
-        self.err.set_success()
         return True
 
     def add(self, key, value, expire, db=0):
@@ -619,16 +573,13 @@ class ProtocolHandler(object):
         value = self.pack(value)
         status = self._rest_put('add', path, value, expire)
         if status != 201:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % status)
 
-        self.err.set_success()
         return True
 
     def cas(self, key, old_val, new_val, expire, db=0):
         if old_val is None and new_val is None:
-            self.err.set_error(self.err.LOGIC, 'old value and/or new value must be specified')
-            return False
+            raise ValueError('old value and/or new value must be specified')
 
         db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
         path = '/rpc/cas?DB=' + db
@@ -650,10 +601,8 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def remove(self, key, db=0):
@@ -664,10 +613,8 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 204:
-            self.err.set_error(self.err.NOTFOUND)
             return False
 
-        self.err.set_success()
         return True
 
     def replace(self, key, value, expire, db=0):
@@ -677,10 +624,8 @@ class ProtocolHandler(object):
         value = self.pack(value)
         status = self._rest_put('replace', path, value, expire)
         if status != 201:
-            self.err.set_error(self.err.NOTFOUND)
             return False
 
-        self.err.set_success()
         return True
 
     def append(self, key, value, expire, db=0):
@@ -701,8 +646,7 @@ class ProtocolHandler(object):
 
         if (not isinstance(data, bytes_type) and
             not isinstance(data, unicode_type)):
-            self.err.set_error(self.err.EMISC, 'stored value is not a string or bytes type')
-            return False
+            raise KyotoTycoonException('stored value is not a string or bytes type')
 
         if type(data) != type(value):
             if isinstance(data, bytes_type):
@@ -714,10 +658,8 @@ class ProtocolHandler(object):
 
         # This makes the operation atomic...
         if self.cas(key, old_data, data, expire, db) is not True:
-            self.err.set_error(self.err.EMISC, 'error while storing modified value')
-            return False
+            raise KyotoTycoonException('error while storing modified value')
 
-        self.err.set_success()
         return True
 
     def increment(self, key, delta, expire, db=0):
@@ -729,16 +671,13 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return None
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return int(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def increment_double(self, key, delta, expire, db=0):
         if key is None:
-            self.err.set_error(self.err.LOGIC, 'no key specified')
-            return False
+            raise ValueError('no key specified')
 
         db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
         path = '/rpc/increment_double?DB=' + db
@@ -748,25 +687,21 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return None
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return float(_tsv_to_dict(body, res.getheader('Content-Type', ''))[b'num'])
 
     def report(self):
         self.conn.request('GET', '/rpc/report')
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return None
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         report_dict = {}
         for k, v in res_dict.items():
             report_dict[k.decode('utf-8')] = v.decode('utf-8')
 
-        self.err.set_success()
         return report_dict
 
     def status(self, db=0):
@@ -776,15 +711,13 @@ class ProtocolHandler(object):
         self.conn.request('GET', path)
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return None
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
         status_dict = {}
         for k, v in res_dict.items():
             status_dict[k.decode('utf-8')] = v.decode('utf-8')
 
-        self.err.set_success()
         return status_dict
 
     def clear(self, db=0):
@@ -794,10 +727,8 @@ class ProtocolHandler(object):
         self.conn.request('GET', path)
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.EMISC)
-            return False
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
-        self.err.set_success()
         return True
 
     def count(self, db=0):
@@ -827,8 +758,7 @@ class ProtocolHandler(object):
 
         res, body = self.getresponse()
         if res.status != 200:
-            self.err.set_error(self.err.MISC)
-            return None
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
 
         rv = {}
         res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
@@ -837,7 +767,6 @@ class ProtocolHandler(object):
             if v is not None:
                 rv[k.decode('utf-8')[1:]] = v
 
-        self.err.set_success()
         return rv
 
     def _rest_put(self, operation, key, value, expire):

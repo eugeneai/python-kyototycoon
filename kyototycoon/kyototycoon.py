@@ -8,24 +8,18 @@
 # Note that python-kyototycoon follows the following interface
 # standard: http://fallabs.com/kyototycoon/kyototycoon.idl
 
+import warnings
+
 from . import kt_http
 from . import kt_binary
 
 from .kt_common import KT_PACKER_PICKLE
 
-KT_DEFAULT_HOST = '127.0.0.1'
-KT_DEFAULT_PORT = 1978
-KT_DEFAULT_TIMEOUT = 30
-
 class KyotoTycoon(object):
     def __init__(self, binary=False, pack_type=KT_PACKER_PICKLE,
-                       custom_packer=None, exceptions=False):
+                       custom_packer=None, exceptions=True):
         '''
         Initialize a "Binary Protocol" or "HTTP Protocol" KyotoTycoon object.
-
-        The library doesn't raise exceptions for server errors (soft errors) by
-        default (for historical reasons). This behavior can be changed by using
-        the "exceptions" parameter.
 
         Note: The default packer uses pickle protocol v2, which is the highest
               version that's still compatible with both Python 2 and 3. If you
@@ -33,12 +27,16 @@ class KyotoTycoon(object):
 
         '''
 
+        if not exceptions:
+            # Relying on separate error states is bad form and should be avoided...
+            raise DeprecationWarning('not raising exceptions on error has been removed')
+
         if binary:
             self.atomic = False  # The binary protocol does not support atomic operations.
-            self.core = kt_binary.ProtocolHandler(pack_type, custom_packer, exceptions)
+            self.core = kt_binary.ProtocolHandler(pack_type, custom_packer)
         else:
             self.atomic = True
-            self.core = kt_http.ProtocolHandler(pack_type, custom_packer, exceptions)
+            self.core = kt_http.ProtocolHandler(pack_type, custom_packer)
 
     def __enter__(self):
         return self
@@ -46,12 +44,7 @@ class KyotoTycoon(object):
     def __exit__(self, type, value, traceback):
         self.close()
 
-    def error(self):
-        '''Return the error state from the last operation.'''
-
-        return self.core.error()
-
-    def open(self, host=KT_DEFAULT_HOST, port=KT_DEFAULT_PORT, timeout=KT_DEFAULT_TIMEOUT):
+    def open(self, host='127.0.0.1', port=1978, timeout=30):
         '''Open a new connection to a KT server.'''
 
         return True if self.core.open(host, port, timeout) else False

@@ -12,7 +12,7 @@
 import socket
 import struct
 
-from .kt_error import KyotoTycoonError, KyotoTycoonException
+from .kt_error import KyotoTycoonException
 
 from .kt_common import KT_PACKER_CUSTOM, \
                        KT_PACKER_PICKLE, \
@@ -36,8 +36,7 @@ MB_PLAY_SCRIPT = 0xb4
 DEFAULT_EXPIRE = 0x7fffffffffffffff
 
 class ProtocolHandler(object):
-    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None, exceptions=False):
-        self.err = KyotoTycoonError(exceptions)
+    def __init__(self, pack_type=KT_PACKER_PICKLE, custom_packer=None):
         self.socket = None
 
         if pack_type != KT_PACKER_CUSTOM and custom_packer is not None:
@@ -110,12 +109,10 @@ class ProtocolHandler(object):
 
         magic, = struct.unpack('!B', self._read(1))
         if magic != MB_SET_BULK:
-            self.err.set_error(self.err.INTERNAL)
-            return False
+            raise KyotoTycoonException('bad response [%s]' % hex(magic))
 
-        num_items, = struct.unpack('!I', self._read(4))
-        self.err.set_success()
-        return num_items
+        # Number of items set...
+        return struct.unpack('!I', self._read(4))[0]
 
     def remove_bulk(self, keys, atomic, db=0):
         if atomic:
@@ -134,16 +131,10 @@ class ProtocolHandler(object):
 
         magic, = struct.unpack('!B', self._read(1))
         if magic != MB_REMOVE_BULK:
-            self.err.set_error(self.err.INTERNAL)
-            return False
+            raise KyotoTycoonException('bad response [%s]' % hex(magic))
 
-        num_items, = struct.unpack('!I', self._read(4))
-        if num_items > 0:
-            self.err.set_success()
-        else:
-            self.err.set_error(self.err.NOTFOUND)
-
-        return num_items
+        # Number of items removed...
+        return struct.unpack('!I', self._read(4))[0]
 
     def get_bulk(self, keys, atomic, db=0):
         if atomic:
@@ -162,8 +153,7 @@ class ProtocolHandler(object):
 
         magic, = struct.unpack('!B', self._read(1))
         if magic != MB_GET_BULK:
-            self.err.set_error(self.err.INTERNAL)
-            return False
+            raise KyotoTycoonException('bad response [%s]' % hex(magic))
 
         num_items, = struct.unpack('!I', self._read(4))
         items = {}
@@ -172,11 +162,6 @@ class ProtocolHandler(object):
             key = self._read(key_length)
             value = self._read(value_length)
             items[key.decode('utf-8')] = self.unpack(value)
-
-        if num_items > 0:
-            self.err.set_success()
-        else:
-            self.err.set_error(self.err.NOTFOUND)
 
         return items
 
@@ -251,8 +236,7 @@ class ProtocolHandler(object):
 
         magic, = struct.unpack('!B', self._read(1))
         if magic != MB_PLAY_SCRIPT:
-            self.err.set_error(self.err.INTERNAL)
-            return False
+            raise KyotoTycoonException('bad response [%s]' % hex(magic))
 
         num_items, = struct.unpack('!I', self._read(4))
         items = {}
@@ -262,7 +246,6 @@ class ProtocolHandler(object):
             value = self._read(value_length)
             items[key.decode('utf-8')] = value
 
-        self.err.set_success()
         return items
 
     def _write(self, data):

@@ -11,7 +11,7 @@
 import config
 import time
 import unittest
-from kyototycoon import KyotoTycoon
+from kyototycoon import KyotoTycoon, KyotoTycoonException
 
 DB_1 = 0
 DB_2 = 1
@@ -39,20 +39,17 @@ class UnitTest(unittest.TestCase):
         status = self.kt_handle_http.status(DB_2)
         assert status is not None
 
-        status = self.kt_handle_http.status(DB_INVALID)
-        assert status is None
-
-        status = self.kt_handle_http.status('non_existent')
-        assert status is None
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.status, DB_INVALID)
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.status, 'non_existent')
 
     def test_set_get(self):
         self.assertTrue(self.clear_all())
         self.assertTrue(self.kt_handle_http.set('ice', 'cream', db=DB_2))
-        self.assertFalse(self.kt_handle_http.set('palo', 'alto', db=DB_INVALID))
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.set, 'palo', 'alto', db=DB_INVALID)
 
         self.assertEqual(self.kt_handle_http.get('ice'), None)
         self.assertEqual(self.kt_handle_http.get('ice', db=DB_1), None)
-        self.assertFalse(self.kt_handle_http.get('ice', db=DB_INVALID))
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.get, 'ice', db=DB_INVALID)
 
         self.assertEqual(self.kt_handle_http.get('ice', db=DB_2), 'cream')
         self.assertEqual(self.kt_handle_http.count(db=DB_1), 0)
@@ -64,7 +61,7 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(self.kt_handle_http.get('frozen'), 'yoghurt')
         self.assertEqual(self.kt_handle_http.get('frozen', db=DB_1), 'yoghurt')
         self.assertEqual(self.kt_handle_http.get('frozen', db=DB_2), None)
-        self.assertFalse(self.kt_handle_http.get('frozen', db=DB_INVALID), None)
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.get, 'frozen', db=DB_INVALID)
 
         self.assertTrue(self.kt_handle_http.clear(db=DB_1))
         self.assertEqual(self.kt_handle_http.count(db=DB_1), 0)
@@ -104,9 +101,9 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle_http.add('key1', 'val1', db=DB_2))
 
         # Now they should.
-        self.assertFalse(self.kt_handle_http.add('key1', 'val1', db=DB_1))
-        self.assertFalse(self.kt_handle_http.add('key1', 'val1', db=DB_2))
-        self.assertFalse(self.kt_handle_http.add('key1', 'val1', db=DB_INVALID))
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.add, 'key1', 'val1', db=DB_1)
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.add, 'key1', 'val1', db=DB_2)
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.add, 'key1', 'val1', db=DB_INVALID)
 
     def test_replace(self):
         self.assertTrue(self.clear_all())
@@ -125,7 +122,7 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.clear_all())
         self.assertTrue(self.kt_handle_http.set('key', 'xxx'))
         self.assertEqual(self.kt_handle_http.get('key', db=DB_2), None)
-        self.assertFalse(self.kt_handle_http.cas('key', old_val='xxx', new_val='yyy', db=DB_2))
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.cas, 'key', old_val='xxx', new_val='yyy', db=DB_2)
         self.assertEqual(self.kt_handle_http.get('key', db=DB_1), 'xxx')
         self.assertTrue(self.kt_handle_http.cas('key', old_val='xxx', new_val='yyy', db=DB_1))
         self.assertTrue(self.kt_handle_http.cas('key', new_val='xxx', db=DB_2))
@@ -143,7 +140,7 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle_http.vacuum())
         self.assertTrue(self.kt_handle_http.vacuum(db=DB_1))
         self.assertTrue(self.kt_handle_http.vacuum(db=DB_2))
-        self.assertFalse(self.kt_handle_http.vacuum(db=DB_INVALID))
+        self.assertRaises(KyotoTycoonException, self.kt_handle_http.vacuum, db=DB_INVALID)
 
     def test_append(self):
         self.assertTrue(self.clear_all())
