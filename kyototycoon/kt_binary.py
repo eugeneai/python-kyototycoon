@@ -69,9 +69,6 @@ class ProtocolHandler(object):
         else:
             raise KyotoTycoonException('unsupported pack type specified')
 
-    def error(self):
-        return self.err
-
     def cursor(self):
         raise NotImplementedError('supported under the HTTP procotol only')
 

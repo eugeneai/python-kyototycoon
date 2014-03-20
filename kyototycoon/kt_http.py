@@ -338,9 +338,6 @@ class ProtocolHandler(object):
         else:
             raise KyotoTycoonException('unsupported pack type specified')
 
-    def error(self):
-        return self.err
-
     def cursor(self):
         return Cursor(self)
 
