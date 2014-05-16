@@ -124,7 +124,7 @@ class Cursor(object):
         '''Jump the cursor to a record (last record if "None") for forward scan.'''
 
         db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
-        path += '/rpc/cur_jump_back?DB=' + db
+        path = '/rpc/cur_jump_back?DB=' + db
 
         request_dict = {'CUR': self.cursor_id}
         if key:
