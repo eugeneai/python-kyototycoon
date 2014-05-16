@@ -115,6 +115,10 @@ class Cursor(object):
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
+        if res.status == 450:
+            # Since this is normal while iterating, do not raise an exception...
+            return False
+
         if res.status != 200:
             raise KyotoTycoonException('protocol error [%d]' % res.status)
 
@@ -134,6 +138,10 @@ class Cursor(object):
         self.protocol_handler.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
 
         res, body = self.protocol_handler.getresponse()
+        if res.status == 450:
+            # Since this is normal while iterating, do not raise an exception...
+            return False
+
         if res.status != 200:
             raise KyotoTycoonException('protocol error [%d]' % res.status)
 
