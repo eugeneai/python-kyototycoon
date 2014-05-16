@@ -101,6 +101,18 @@ class Cursor(object):
         # Cleanup the cursor when leaving "with" blocks...
         self.delete()
 
+    def __iter__(self):
+        '''Return all (key,value) pairs for the cursor, in forward scan order.'''
+
+        if not self.jump():
+            return
+
+        while True:
+            yield self.get()
+
+            if not self.step():
+                return
+
     def jump(self, key=None, db=0):
         '''Jump the cursor to a record (first record if "None") for forward scan.'''
 
