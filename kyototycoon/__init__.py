@@ -10,4 +10,6 @@ from .kt_common import KT_PACKER_CUSTOM, \
 
 from .kt_error import KyotoTycoonException
 
+from .kyotoslave import KyotoSlave
+
 # EOF - __init__.py
