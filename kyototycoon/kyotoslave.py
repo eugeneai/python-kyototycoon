@@ -20,6 +20,8 @@ OP_CLEAR = 0xa5
 
 class KyotoSlave(object):
     def __init__(self, sid, host='127.0.0.1', port=1978, timeout=30):
+        '''Initialize a Kyoto Tycoon replication slave with ID "sid" to the specified master.'''
+
         if not (0 <= sid <= 65535):
             raise ValueError('SID must fit in a 16-bit unsigned integer')
 
@@ -29,22 +31,24 @@ class KyotoSlave(object):
         self.timeout = timeout
 
     def consume(self, timestamp=None):
+        '''Yield all available transaction log entries starting at "timestamp".'''
+
         self.socket = socket.create_connection((self.host, self.port), self.timeout)
 
-        start_ts = int(time.time() * 10**9) if timestamp is None else timestamp
+        start_ts = int(time.time() if timestamp is None else timestamp) * 10**9
 
         # Ask the server for all available transaction log entries since "start_ts"...
         request = [struct.pack('!BIQH', MB_REPL, 0x00, start_ts, self.sid)]
         self._write(b''.join(request))
 
-        magic, = struct.unpack('!B', self._read(1))
+        magic, = struct.unpack('B', self._read(1))
         if magic != MB_REPL:
             raise KyotoTycoonException('bad response [%s]' % hex(magic))
 
         while True:
             magic, ts = struct.unpack('!BQ', self._read(9))
             if magic == MB_SYNC:  # ...the head of the transaction log has been reached.
-                self._write(chr(MB_REPL))
+                self._write(struct.pack('B', MB_REPL))
                 continue
 
             if magic != MB_REPL:
@@ -53,32 +57,34 @@ class KyotoSlave(object):
             # Common log entry information...
             size, = struct.unpack('!I', self._read(4))
             sid, db, db_op = struct.unpack('!HHB', self._read(5))
+            buf = bytearray(self._read(size - 5))
+
+            if sid == self.sid:  # ...this must never happen!
+                raise KyotoTycoonException('bad log entry [sid=%d]' % sid)
 
             if db_op == OP_CLEAR:
-                yield {"sid": sid, "db": db, "operation": "clear"}
+                yield {"sid": sid, "db": db, "op": "clear"}
                 continue
-
-            buf = self._read(size - 5)
 
             if db_op == OP_REMOVE:
                 key_size, buf = self._read_varnum(buf)
-                key = buf[:key_size]
+                key = bytes(buf[:key_size])
 
-                yield {"sid": sid, "db": db, "operation": "remove", "key": key}
+                yield {"sid": sid, "db": db, "op": "remove", "key": key}
                 continue
 
             if db_op == OP_SET:
                 key_size, buf = self._read_varnum(buf)
-                val_size, buf = self._read_varnum(buf)
+                value_size, buf = self._read_varnum(buf)
 
-                key = buf[:key_size]
-                val = buf[key_size:]
+                key = bytes(buf[:key_size])
+                value = bytes(buf[key_size:])
 
                 # The expiration time is contained in the value portion...
-                xt, = struct.unpack('!Q', '\x00\x00\x00' + val[:5])
-                val = val[5:]
+                xt, = struct.unpack('!Q', b'\x00\x00\x00' + value[:5])
+                value = value[5:]
 
-                yield {"sid": sid, "db": db, "operation": "set", "key": key, "value": val, "expire_ts": xt}
+                yield {"sid": sid, "db": db, "op": "set", "key": key, "value": value, "xt": xt}
                 continue
 
             raise KyotoTycoonException('unsupported database operation [%s]' % hex(db_op))
@@ -89,21 +95,15 @@ class KyotoSlave(object):
         return True
 
     def _read_varnum(self, data):
-        rp = 0
         value = 0
 
-        while True:
-            if rp >= len(data):
-                return (0, data)
+        for i, byte in enumerate(data):
+            value = (value << 7) + (byte & 0x7f)
 
-            curr_byte = ord(data[rp])
-            value = (value << 7) + (curr_byte & 0x7f)
-            rp += 1
+            if byte < 0x80:
+                return (value, data[i+1:])
 
-            if curr_byte < 0x80:
-                break
-
-        return (value, data[rp:])
+        return (0, data)
 
     def _write(self, data):
         self.socket.sendall(data)
