@@ -38,8 +38,7 @@ class KyotoSlave(object):
         start_ts = int(time.time() if timestamp is None else timestamp) * 10**9
 
         # Ask the server for all available transaction log entries since "start_ts"...
-        request = [struct.pack('!BIQH', MB_REPL, 0x00, start_ts, self.sid)]
-        self._write(b''.join(request))
+        self._write(struct.pack('!BIQH', MB_REPL, 0x00, start_ts, self.sid))
 
         magic, = struct.unpack('B', self._read(1))
         if magic != MB_REPL:
@@ -57,34 +56,40 @@ class KyotoSlave(object):
             # Common log entry information...
             size, = struct.unpack('!I', self._read(4))
             sid, db, db_op = struct.unpack('!HHB', self._read(5))
+
+            entry = {'sid': sid, 'db': db}
+
             buf = bytearray(self._read(size - 5))
 
             if sid == self.sid:  # ...this must never happen!
                 raise KyotoTycoonException('bad log entry [sid=%d]' % sid)
 
             if db_op == OP_CLEAR:
-                yield {"sid": sid, "db": db, "op": "clear"}
+                entry['operation'] = 'clear'
+
+                yield entry
                 continue
 
             if db_op == OP_REMOVE:
-                key_size, buf = self._read_varnum(buf)
-                key = bytes(buf[:key_size])
+                entry['operation'] = 'remove'
 
-                yield {"sid": sid, "db": db, "op": "remove", "key": key}
+                key_size, buf = self._read_varnum(buf)
+                entry['key'] = bytes(buf[:key_size])
+
+                yield entry
                 continue
 
             if db_op == OP_SET:
+                entry['operation'] = 'set'
+
                 key_size, buf = self._read_varnum(buf)
                 value_size, buf = self._read_varnum(buf)
 
-                key = bytes(buf[:key_size])
-                value = bytes(buf[key_size:])
+                entry['key'] = bytes(buf[:key_size])
+                entry['expires'], = struct.unpack('!Q', b'\x00\x00\x00' + bytes(buf[key_size:key_size+5]))
+                entry['value'] = bytes(buf[key_size+5:key_size+value_size])
 
-                # The expiration time is contained in the value portion...
-                xt, = struct.unpack('!Q', b'\x00\x00\x00' + value[:5])
-                value = value[5:]
-
-                yield {"sid": sid, "db": db, "op": "set", "key": key, "value": value, "xt": xt}
+                yield entry
                 continue
 
             raise KyotoTycoonException('unsupported database operation [%s]' % hex(db_op))

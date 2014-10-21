@@ -50,18 +50,24 @@ because the server can return data in more than one format at
 once. The caller will most likely know the type of data that
 the called script returns and must do the marshalling itself.
 
+
 REPLICATION SLAVE
 -----------------
-Since version 0.6.2 this library also contains a replication slave
+Since version 0.7.0 this library also contains a replication slave
 class. This class provides a ``consume()`` generator function that
 receives and parses transaction log entries from a Kyoto Tycoon
 master server into dictionaries.
 
-This can be used to build your own custom replication or react to
-server "set", "remove" or "clear" operations.
+This can be used to build your own custom replication schemes,
+like key filtering, or react to server "set", "remove" or "clear"
+database operations.
 
-Note that only explicit operations create transaction log events.
-Implicit operations like key removal upon expiration do not.
+Do note that only explicit operations create transaction log events.
+Implicit operations like key removal upon expiration don't.
+
+Unlike the client library, the replication slave always handles the
+"key" and "value" attributes as opaque binary data.
+
 
 COMPATIBILITY
 -------------
@@ -74,13 +80,13 @@ the old behavior for compatibility reasons, use a version up to
 on all Kyoto Tycoon errors.
 
 
-
 INSTALLATION
 ------------
 You can install the latest version of this library from source::
 
     python setup.py build
     python setup.py install
+
 
 AUTHORS
 -------

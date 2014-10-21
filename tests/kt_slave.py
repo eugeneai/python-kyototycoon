@@ -34,7 +34,7 @@ from __future__ import division
 import sys
 import os, os.path
 
-from time import time
+from time import time, strftime, localtime
 from getopt import getopt, GetoptError
 
 from kyototycoon import KyotoSlave
@@ -82,10 +82,26 @@ def main():
 
     slave = KyotoSlave(sid=sid, host=server["host"], port=server["port"])
 
-    for entry in slave.consume(time()):
-        for k, v in sorted(entry.items()):
-            print("%s: %s" % (k, v))
-        print("")
+    try:
+        for entry in slave.consume(time()):
+            print("operation '%s' on db %d from sid %d..." % (entry["operation"], entry["db"], entry["sid"]))
+
+            if entry["operation"] == "clear":
+                continue
+
+            print("  key: %s" % entry["key"])
+
+            if entry["operation"] == "remove":
+                continue
+
+            print("  value: %s" % entry["value"])
+            print("  expires: %s [%s]" % (entry["expires"], strftime("%Y-%m-%d %H:%M:%S", localtime(entry["expires"]))))
+
+            print("")
+
+    except KeyboardInterrupt:
+        print("Exiting on Control-C...")
+        slave.close()
 
 
 if __name__ == "__main__":
