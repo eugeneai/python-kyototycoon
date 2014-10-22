@@ -83,6 +83,11 @@ class ProtocolHandler(object):
 
     def get(self, key, db=0):
         values = self.get_bulk([key], False, db)
+
+        # This should never occur, but it does. What's happening?
+        if values and key not in values:
+            raise KyotoTycoonException('key mismatch: ' + repr(values))
+
         return values[key] if values else None
 
     def set_bulk(self, kv_dict, expire, atomic, db=0):
