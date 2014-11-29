@@ -57,7 +57,7 @@ class KyotoSlave(object):
             size, = struct.unpack('!I', self._read(4))
             sid, db, db_op = struct.unpack('!HHB', self._read(5))
 
-            entry = {'sid': sid, 'db': db}
+            entry = {'sid': sid, 'db': db, 'opcode': db_op}
 
             buf = bytearray(self._read(size - 5))
 

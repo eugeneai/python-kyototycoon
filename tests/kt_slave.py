@@ -84,7 +84,7 @@ def main():
 
     try:
         for entry in slave.consume(time()):
-            print("operation '%s' on db %d from sid %d..." % (entry["operation"], entry["db"], entry["sid"]))
+            print("operation '%s' (%s) on db %d from sid %d..." % (entry["operation"], hex(entry["opcode"]), entry["db"], entry["sid"]))
 
             if entry["operation"] == "clear":
                 continue
