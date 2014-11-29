@@ -87,6 +87,10 @@ You can install the latest version of this library from source::
     python setup.py build
     python setup.py install
 
+Or, you can install the latest stable release from PyPI::
+
+    pip install python-kyototycoon-ng
+
 
 AUTHORS
 -------
