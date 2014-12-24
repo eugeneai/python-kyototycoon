@@ -256,6 +256,12 @@ class UnitTest(unittest.TestCase):
         list = self.kt_handle.match_similar('potatoes', 2, 1)
         self.assertEqual(len(list), 1)
 
+        self.assertTrue(self.kt_handle.set('cafe', 'val'))
+        self.assertTrue(self.kt_handle.set('caf\xc3'.decode('iso8859-1'), 'val'))
+        list = self.kt_handle.match_similar('cafe', 1)
+        self.assertEqual(len(list), 2)
+
+
     def test_cursor(self):
         self.assertTrue(self.kt_handle.clear())
         self.assertEqual(self.kt_handle.count(), 0)

@@ -582,7 +582,7 @@ class ProtocolHandler(object):
         db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
         path = '/rpc/match_similar?DB=' + db
 
-        request_dict = {'origin': origin.encode('utf-8')}
+        request_dict = {'origin': origin.encode('utf-8'), 'utf': ''}
 
         if range is not None and range >= 0:
             request_dict['range'] = range
