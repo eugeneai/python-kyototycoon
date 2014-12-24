@@ -179,6 +179,9 @@ class ProtocolHandler(object):
     def match_regex(self, regex, limit, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
+    def match_similar(self, origin, range, limit, db=0):
+        raise NotImplementedError('supported under the HTTP procotol only')
+
     def set(self, key, value, expire, db=0):
         numitems = self.set_bulk({key: value}, expire, False, db)
         return numitems > 0

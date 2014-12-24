@@ -223,6 +223,8 @@ class UnitTest(unittest.TestCase):
         self.assertEqual(len(list), 5)
         list = self.kt_handle.match_prefix('abc', 1)
         self.assertEqual(list[0][:3], 'abc')
+        list = self.kt_handle.match_prefix('abc', 3)
+        self.assertEqual(len(list), 3)
 
     def test_match_regex(self):
         self.assertTrue(self.kt_handle.clear())
@@ -235,6 +237,23 @@ class UnitTest(unittest.TestCase):
         list = self.kt_handle.match_regex('^abcd')
         self.assertEqual(len(list), 2)
         list = self.kt_handle.match_regex('e$')
+        self.assertEqual(len(list), 1)
+        list = self.kt_handle.match_regex('^abc', 2)
+        self.assertEqual(len(list), 2)
+
+    def test_match_similar(self):
+        self.assertTrue(self.kt_handle.clear())
+        self.assertTrue(self.kt_handle.set('potatoes', 'val'))
+        self.assertTrue(self.kt_handle.set('potataes', 'val'))
+        self.assertTrue(self.kt_handle.set('patataes', 'val'))
+
+        list = self.kt_handle.match_similar('potatoes', 0)
+        self.assertEqual(len(list), 1)
+        list = self.kt_handle.match_similar('potatoes', 1)
+        self.assertEqual(len(list), 2)
+        list = self.kt_handle.match_similar('potatoes', 2)
+        self.assertEqual(len(list), 3)
+        list = self.kt_handle.match_similar('potatoes', 2, 1)
         self.assertEqual(len(list), 1)
 
     def test_cursor(self):

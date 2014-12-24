@@ -575,6 +575,42 @@ class ProtocolHandler(object):
 
         return rv
 
+    def match_similar(self, origin, range, limit, db=0):
+        if origin is None:
+            raise ValueError('no origin string specified')
+
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/match_similar?DB=' + db
+
+        request_dict = {'origin': origin.encode('utf-8')}
+
+        if range is not None and range >= 0:
+            request_dict['range'] = range
+
+        if limit:
+            request_dict['max'] = limit
+
+        request_body = _dict_to_tsv(request_dict)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
+
+        res, body = self.getresponse()
+        if res.status != 200:
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
+
+        rv = []
+        res_list = _tsv_to_list(body, res.getheader('Content-Type', ''))
+        if len(res_list) == 0 or res_list[-1][0] != b'num':
+            raise KyotoTycoonException('server returned no data')
+
+        num_key, num = res_list.pop()
+        if num == '0':
+            return []
+
+        for k, v in res_list:
+            rv.append(k.decode('utf-8')[1:])
+
+        return rv
+
     def set(self, key, value, expire, db=0):
         db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
         path = '/%s/%s' % (db, quote(key.encode('utf-8')))
