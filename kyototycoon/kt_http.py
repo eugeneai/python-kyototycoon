@@ -575,7 +575,7 @@ class ProtocolHandler(object):
 
         return rv
 
-    def match_similar(self, origin, range, limit, db=0):
+    def match_similar(self, origin, distance, limit, db=0):
         if origin is None:
             raise ValueError('no origin string specified')
 
@@ -584,8 +584,8 @@ class ProtocolHandler(object):
 
         request_dict = {'origin': origin.encode('utf-8'), 'utf': ''}
 
-        if range is not None and range >= 0:
-            request_dict['range'] = range
+        if distance is not None and distance >= 0:
+            request_dict['range'] = distance
 
         if limit:
             request_dict['max'] = limit

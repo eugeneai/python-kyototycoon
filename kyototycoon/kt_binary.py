@@ -179,7 +179,7 @@ class ProtocolHandler(object):
     def match_regex(self, regex, limit, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
-    def match_similar(self, origin, range, limit, db=0):
+    def match_similar(self, origin, distance, limit, db=0):
         raise NotImplementedError('supported under the HTTP procotol only')
 
     def set(self, key, value, expire, db=0):

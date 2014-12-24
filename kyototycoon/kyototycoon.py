@@ -170,10 +170,10 @@ class KyotoTycoon(object):
 
         return self.core.match_regex(regex, limit, db)
 
-    def match_similar(self, origin, range=0, limit=None, db=0):
+    def match_similar(self, origin, distance=0, limit=None, db=0):
         '''Get keys similar to the origin string, based on the levenshtein distance.'''
 
-        return self.core.match_similar(origin, range, limit, db)
+        return self.core.match_similar(origin, distance, limit, db)
 
     def cursor(self):
         '''Obtain a new (uninitialized) record cursor.'''
