@@ -14,7 +14,7 @@ setup(
     maintainer_email='cefrodrigues@gmail.com',
     name='python-kyototycoon-ng',
     description='Python client for Kyoto Tycoon key-value store',
-    version='0.7.1',
+    version='0.7.2',
     license='BSD',
     keywords='Kyoto Tycoon, Kyoto Cabinet',
     packages=['kyototycoon'],

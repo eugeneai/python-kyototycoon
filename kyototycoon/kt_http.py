@@ -418,6 +418,9 @@ class ProtocolHandler(object):
 
         request_body = ['atomic\t\n' if atomic else '']
 
+        if expire is not None:
+            request_body.append('xt\t%d\n' % expire)
+
         for key, value in kv_dict.items():
             key = quote(key.encode('utf-8'))
             value = quote(self.pack(value))

@@ -30,10 +30,26 @@ class UnitTest(unittest.TestCase):
         time.sleep(4)
         self.assertEqual(self.kt_http_handle.count(), 0)
 
+        # Bulk expire in 2 seconds.
+        self.assertTrue(self.kt_http_handle.set_bulk({'key1-1': 'value1', 'key1-2': 'value2'}, 2))
+        self.assertEqual(self.kt_http_handle.get('key1-1'), 'value1')
+        self.assertEqual(self.kt_http_handle.get('key1-2'), 'value2')
+        self.assertEqual(self.kt_http_handle.count(), 2)
+        time.sleep(4)
+        self.assertEqual(self.kt_http_handle.count(), 0)
+
         # Set record to be expired in 2 seconds.
         self.assertTrue(self.kt_bin_handle.set('key2', 'value', 2))
         self.assertEqual(self.kt_bin_handle.get('key2'), 'value')
         self.assertEqual(self.kt_http_handle.count(), 1)
+        time.sleep(4)
+        self.assertEqual(self.kt_http_handle.count(), 0)
+
+        # Bulk expire in 2 seconds.
+        self.assertTrue(self.kt_bin_handle.set_bulk({'key2-1': 'value1', 'key2-2': 'value2'}, 2))
+        self.assertEqual(self.kt_bin_handle.get('key2-1'), 'value1')
+        self.assertEqual(self.kt_bin_handle.get('key2-2'), 'value2')
+        self.assertEqual(self.kt_http_handle.count(), 2)
         time.sleep(4)
         self.assertEqual(self.kt_http_handle.count(), 0)
 
