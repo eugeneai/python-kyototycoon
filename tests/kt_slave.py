@@ -31,6 +31,8 @@ from __future__ import division
 #from __future__ import unicode_literals
 
 
+import config
+
 import sys
 import os, os.path
 
