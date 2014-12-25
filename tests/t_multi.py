@@ -71,11 +71,9 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.clear_all())
 
         self.assertTrue(self.kt_handle_http.set('a', 'xxxx', db=DB_1))
-        self.assertTrue(self.kt_handle_http.set('b', 'yyyy', db=DB_1))
-        self.assertTrue(self.kt_handle_http.set('c', 'zzzz', db=DB_1))
+        self.assertTrue(self.kt_handle_http.set_bulk({'b': 'yyyy', 'c': 'zzzz'}, db=DB_1))
         self.assertTrue(self.kt_handle_http.set('a1', 'xxxx', db=DB_2))
-        self.assertTrue(self.kt_handle_http.set('b1', 'yyyy', db=DB_2))
-        self.assertTrue(self.kt_handle_http.set('c1', 'zzzz', db=DB_2))
+        self.assertTrue(self.kt_handle_http.set_bulk({'b1': 'yyyy', 'c1': 'zzzz'}, db=DB_2))
 
         d = self.kt_handle_http.get_bulk(['a', 'b', 'c'], db=DB_1)
         self.assertEqual(len(d), 3)
@@ -208,11 +206,9 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.clear_all())
 
         self.assertTrue(self.kt_handle_bin.set('a', 'xxxx', db=DB_1))
-        self.assertTrue(self.kt_handle_bin.set('b', 'yyyy', db=DB_1))
-        self.assertTrue(self.kt_handle_bin.set('c', 'zzzz', db=DB_1))
+        self.assertTrue(self.kt_handle_bin.set_bulk({'b': 'yyyy', 'c': 'zzzz'}, db=DB_1))
         self.assertTrue(self.kt_handle_bin.set('a1', 'xxxx', db=DB_2))
-        self.assertTrue(self.kt_handle_bin.set('b1', 'yyyy', db=DB_2))
-        self.assertTrue(self.kt_handle_bin.set('c1', 'zzzz', db=DB_2))
+        self.assertTrue(self.kt_handle_bin.set_bulk({'b1': 'yyyy', 'c1': 'zzzz'}, db=DB_2))
 
         d = self.kt_handle_bin.get_bulk(['a', 'b', 'c'], db=DB_1, atomic=False)
         self.assertEqual(len(d), 3)
