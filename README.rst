@@ -9,6 +9,10 @@ For more information on Kyoto Tycoon server, please refer to:
 
   http://fallabs.com/kyototycoon/
 
+Along with this library we're also maintaining an updated and
+ready-to-go fork of Kyoto Tycoon here:
+
+   https://github.com/sapo/kyoto
 
 FEATURES
 --------
@@ -98,8 +102,7 @@ AUTHORS
   * Stephen Hamer <stephen.hamer@upverter.com>
   * Carlos Rodrigues <cefrodrigues@gmail.com>
 
-Binary protocol support was added based on Ulrich Mierendorff's
-code with only minimal changes to make it fit this library.
+Binary protocol support was added based on Ulrich Mierendorff's code.
 You can find the original library at the following URL:
 
   http://www.ulrichmierendorff.com/software/kyoto_tycoon/python_library.html
