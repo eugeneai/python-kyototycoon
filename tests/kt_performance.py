@@ -39,7 +39,14 @@ import os, os.path
 from time import time
 from getopt import getopt, GetoptError
 
-from kyototycoon import KyotoTycoon, KT_PACKER_PICKLE, KT_PACKER_JSON, KT_PACKER_STRING
+from kyototycoon import KyotoTycoon
+from kyototycoon.packers import MemcachePacker
+
+from kyototycoon import KT_PACKER_PICKLE, \
+                        KT_PACKER_JSON, \
+                        KT_PACKER_STRING, \
+                        KT_PACKER_BYTES, \
+                        KT_PACKER_CUSTOM
 
 
 NUM_ITERATIONS = 2000
@@ -92,8 +99,14 @@ def main():
     for binary in (True, False):
         for packer_type, packer_name in ((KT_PACKER_PICKLE, "KT_PACKER_PICKLE"),
                                          (KT_PACKER_JSON, "KT_PACKER_JSON"),
-                                         (KT_PACKER_STRING, "KT_PACKER_STRING")):
-            kt = KyotoTycoon(binary=binary, pack_type=packer_type)
+                                         (KT_PACKER_STRING, "KT_PACKER_STRING"),
+                                         (KT_PACKER_BYTES, "KT_PACKER_BYTES"),
+                                         (KT_PACKER_CUSTOM, "MemcachePacker()")):
+            if packer_type == KT_PACKER_CUSTOM:
+                memc_packer = MemcachePacker(gzip_enabled=False)
+                kt = KyotoTycoon(binary=binary, pack_type=KT_PACKER_CUSTOM, custom_packer=memc_packer)
+            else:
+                kt = KyotoTycoon(binary=binary, pack_type=packer_type)
 
             with kt.connect(server["host"], server["port"], timeout=2) as db:
                 start = time()
@@ -106,6 +119,10 @@ def main():
                     else:
                         key = "key-%d-s-%d-%d-cafe" % (binary, packer_type, i)
                         value = "value-%d-s-%d-%d-cafe" % (binary, packer_type, i)
+
+                    # In this case we must feed it bytes, and have to encode them...
+                    if packer_type in (KT_PACKER_BYTES, KT_PACKER_CUSTOM):
+                        value = value.encode("utf-8")
 
                     db.set(key, value)
                     output = db.get(key)

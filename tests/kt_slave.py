@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# kt_slave.py - follow transacion logs from a server.
+# kt_slave.py - follow transaction logs from a server.
 #
 # Copyright (c) 2014 Carlos Rodrigues <cefrodrigues@gmail.com>
 #
