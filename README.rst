@@ -7,7 +7,7 @@ original library by Toru Maesaka and Stephen Hamer.
 
 For more information on Kyoto Tycoon server, please refer to:
 
-  http://fallabs.com/kyototycoon/
+   http://fallabs.com/kyototycoon/
 
 Along with this library we're also maintaining an updated and
 ready-to-go fork of Kyoto Tycoon here:
@@ -71,6 +71,28 @@ Implicit operations like key removal upon expiration don't.
 
 Unlike the client library, the replication slave always handles the
 "key" and "value" attributes as opaque binary data.
+
+MEMCACHE-ENABLED SERVERS
+------------------------
+Kyoto Tycoon supports a subset of the memcached protocol. When a
+server has this enabled including item flags, these are stored as
+the last 4 bytes of the value. Since version 0.7.3 of this library,
+there's a custom packer included that transparently handles this and
+also includes gzip compression/decompression for scenarios where,
+for example, a Python application is writing HTML pages to the Kyoto
+server and an HTTP server is reading from it using a memcached client
+library.
+
+Example:
+
+    from kyototycoon import KyotoTycoon, KT_PACKER_CUSTOM
+    from kyototycoon.packers import MemcachePacker
+
+    mp = MemcachePacker(gzip_enabled=True, gzip_flag=1)
+    kt = KyotoTycoon(pack_type=KT_PACKER_CUSTOM, custom_packer=mp)
+
+    kt.open("127.0.0.1", 1978)
+    ...
 
 
 COMPATIBILITY
