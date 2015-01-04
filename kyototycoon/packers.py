@@ -45,12 +45,12 @@ class MemcachePacker(object):
         if not self.gzip_enabled or len(data) < self.gzip_threshold:
             return data + self.zero_flag_bytes
 
-        buffer = StringIO()
-        gz = gzip.GzipFile(fileobj=buffer, mode='w')
+        sio = StringIO()
+        gz = gzip.GzipFile(fileobj=sio, mode='w')
         gz.write(data)
         gz.close()
-        gzip_data = buffer.getvalue()
-        buffer.close()
+        gzip_data = sio.getvalue()
+        sio.close()
 
         return gzip_data + self.gzip_flag_bytes
 
@@ -62,11 +62,11 @@ class MemcachePacker(object):
 
         # If compression is enabled, check if the data needs decompression...
         if self.gzip_enabled and stored_flags & 0x1 << (self.gzip_flag - 1):
-            buffer = StringIO(stored_data)
-            gz = gzip.GzipFile(fileobj=buffer, mode='r')
+            sio = StringIO(stored_data)
+            gz = gzip.GzipFile(fileobj=sio, mode='r')
             stored_data = gz.read()
             gz.close()
-            buffer.close()
+            sio.close()
 
         return stored_data
 
