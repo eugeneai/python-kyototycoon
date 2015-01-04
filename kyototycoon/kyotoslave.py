@@ -57,7 +57,7 @@ class KyotoSlave(object):
             size, = struct.unpack('!I', self._read(4))
             sid, db, db_op = struct.unpack('!HHB', self._read(5))
 
-            entry = {'sid': sid, 'db': db, 'opcode': db_op}
+            entry = {'sid': sid, 'db': db, 'op': db_op}
 
             buf = bytearray(self._read(size - 5))
 
@@ -65,14 +65,10 @@ class KyotoSlave(object):
                 raise KyotoTycoonException('bad log entry [sid=%d]' % sid)
 
             if db_op == OP_CLEAR:
-                entry['operation'] = 'clear'
-
                 yield entry
                 continue
 
             if db_op == OP_REMOVE:
-                entry['operation'] = 'remove'
-
                 key_size, buf = self._read_varnum(buf)
                 entry['key'] = bytes(buf[:key_size])
 
@@ -80,8 +76,6 @@ class KyotoSlave(object):
                 continue
 
             if db_op == OP_SET:
-                entry['operation'] = 'set'
-
                 key_size, buf = self._read_varnum(buf)
                 value_size, buf = self._read_varnum(buf)
 

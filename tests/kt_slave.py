@@ -39,7 +39,7 @@ import os, os.path
 from time import time, strftime, localtime
 from getopt import getopt, GetoptError
 
-from kyototycoon import KyotoSlave
+from kyototycoon import KyotoSlave, OP_SET, OP_REMOVE, OP_CLEAR
 
 
 def print_usage():
@@ -82,24 +82,27 @@ def parse_args():
 def main():
     server, sid = parse_args()
 
+    op_name = {OP_SET: "SET", OP_REMOVE: "REMOVE", OP_CLEAR: "CLEAR"}
+
     slave = KyotoSlave(sid=sid, host=server["host"], port=server["port"])
 
     try:
         for entry in slave.consume(time()):
-            print("operation '%s' (%s) on db %d from sid %d..." % (entry["operation"], hex(entry["opcode"]), entry["db"], entry["sid"]))
+            print("[%s] [SID=%s/DB=%d/OP=%s] %s" % (strftime("%Y-%m-%d %H:%M:%S", localtime(time())),
+                                                    entry["sid"], entry["db"], hex(entry["op"]),
+                                                    op_name[entry["op"]]))
 
-            if entry["operation"] == "clear":
+            if entry["op"] == OP_CLEAR:
                 continue
 
-            print("  key: %s" % entry["key"])
+            print("  -> key: %s" % repr(entry["key"]))
 
-            if entry["operation"] == "remove":
+            if entry["op"] == OP_REMOVE:
                 continue
 
-            print("  value: %s" % entry["value"])
-            print("  expires: %s [%s]" % (entry["expires"], strftime("%Y-%m-%d %H:%M:%S", localtime(entry["expires"]))))
-
-            print("")
+            print("  -> value: %s" % repr(entry["value"]))
+            if entry["expires"] < (2**40 - 1):
+                print("  -> expires: %s [%s]" % (entry["expires"], strftime("%Y-%m-%d %H:%M:%S", localtime(entry["expires"]))))
 
     except KeyboardInterrupt:
         print("Exiting on Control-C...")
