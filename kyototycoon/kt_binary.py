@@ -90,6 +90,12 @@ class ProtocolHandler(object):
 
         return values[key] if values else None
 
+    def check(self, key, db=0):
+        raise NotImplementedError('supported under the HTTP procotol only')
+
+    def seize(self, key, db=0):
+        raise NotImplementedError('supported under the HTTP procotol only')
+
     def set_bulk(self, kv_dict, expire, atomic, db=0):
         if atomic:
             raise KyotoTycoonException('atomic supported under the HTTP procotol only')

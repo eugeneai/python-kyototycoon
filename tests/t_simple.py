@@ -123,6 +123,20 @@ class UnitTest(unittest.TestCase):
         self.assertTrue(self.kt_handle.add('number', 111))
         self.assertEqual(self.kt_handle.get('number'), 111)
 
+    def test_check(self):
+        self.assertTrue(self.kt_handle.set('check1', 'abc'))
+        self.assertTrue(self.kt_handle.check('check1'))
+
+        self.assertTrue(self.kt_handle.remove('check1'))
+        self.assertFalse(self.kt_handle.check('check1'))
+
+    def test_seize(self):
+        self.assertTrue(self.kt_handle.set('seize1', 'abc'))
+        self.assertEqual(self.kt_handle.get('seize1'), 'abc')
+        self.assertEqual(self.kt_handle.seize('seize1'), 'abc')
+        self.assertEqual(self.kt_handle.get('seize1'), None)
+        self.assertEqual(self.kt_handle.seize('seize2'), None)
+
     def test_set_bulk(self):
         self.assertTrue(self.kt_handle.clear())
 

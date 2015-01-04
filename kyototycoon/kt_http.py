@@ -409,6 +409,41 @@ class ProtocolHandler(object):
 
         return self.unpack(body)
 
+    def check(self, key, db=0):
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/check?DB=' + db
+
+        request_dict = {'key': key.encode('utf-8')}
+        request_body = _dict_to_tsv(request_dict)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
+
+        res, body = self.getresponse()
+        if res.status == 450:  # ...no record was found
+            return False
+
+        if res.status != 200:
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
+
+        return True
+
+    def seize(self, key, db=0):
+        db = str(db) if isinstance(db, int) else quote(db.encode('utf-8'))
+        path = '/rpc/seize?DB=' + db
+
+        request_dict = {'key': key.encode('utf-8')}
+        request_body = _dict_to_tsv(request_dict)
+        self.conn.request('POST', path, body=request_body, headers=KT_HTTP_HEADER)
+
+        res, body = self.getresponse()
+        if res.status == 450:  # ...no record was found
+            return None
+
+        if res.status != 200:
+            raise KyotoTycoonException('protocol error [%d]' % res.status)
+
+        res_dict = _tsv_to_dict(body, res.getheader('Content-Type', ''))
+        return self.unpack(res_dict[b'value'])
+
     def set_bulk(self, kv_dict, expire, atomic, db=0):
         if isinstance(kv_dict, dict) and len(kv_dict) < 1:
             return 0  # ...done

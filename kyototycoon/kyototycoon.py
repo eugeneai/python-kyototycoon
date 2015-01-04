@@ -135,6 +135,16 @@ class KyotoTycoon(object):
 
         return self.core.get(key, db)
 
+    def check(self, key, db=0):
+        '''Check that a record exists in the database.'''
+
+        return self.core.check(key, db)
+
+    def seize(self, key, db=0):
+        '''Retrieve the value for a record and immediately remove it.'''
+
+        return self.core.seize(key, db)
+
     def get_int(self, key, db=0):
         '''Retrieve the numeric integer value for a record.'''
 

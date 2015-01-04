@@ -103,6 +103,18 @@ class UnitTest(unittest.TestCase):
         self.assertRaises(KyotoTycoonException, self.kt_handle_http.add, 'key1', 'val1', db=DB_2)
         self.assertRaises(KyotoTycoonException, self.kt_handle_http.add, 'key1', 'val1', db=DB_INVALID)
 
+    def test_check(self):
+        self.assertTrue(self.kt_handle_http.set('check1', 'abc', db=DB_2))
+        self.assertTrue(self.kt_handle_http.check('check1', db=DB_2))
+        self.assertFalse(self.kt_handle_http.check('check1', db=DB_1))
+
+    def test_seize(self):
+        self.assertTrue(self.kt_handle_http.set('seize1', 'abc', db=DB_2))
+        self.assertEqual(self.kt_handle_http.get('seize1', db=DB_2), 'abc')
+        self.assertEqual(self.kt_handle_http.get('seize1', db=DB_1), None)
+        self.assertEqual(self.kt_handle_http.seize('seize1', db=DB_2), 'abc')
+        self.assertEqual(self.kt_handle_http.get('seize1', db=DB_2), None)
+
     def test_replace(self):
         self.assertTrue(self.clear_all())
         self.assertTrue(self.kt_handle_http.add('key1', 'val1', db=DB_1))
