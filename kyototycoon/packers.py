@@ -13,6 +13,26 @@ try:
 except ImportError:
     from io import BytesIO as StringIO
 
+class SimpleMemcachePacker(object):
+    '''
+    Kyoto Tycoon servers supporting the memcached protocol store the item flags (if enabled)
+    within the data itself. This packer marshalls "(value, flags)" pairs in this scenario.
+
+    '''
+
+    def pack(self, data):
+        '''Pack a "(value, flags)" pair, where "value" is a sequence of bytes.'''
+
+        if not (0 <= data[1] < 2**32):
+            raise ValueError('flags must fit in a 32-bit unsigned integer')
+
+        return data[0] + struct.pack('>I', data[1])
+
+    def unpack(self, data):
+        '''Return a "(value, flags)" pair, where "value" is a sequence of bytes.'''
+
+        return (data[:-4], struct.unpack('>I', data[-4:])[0])
+
 class MemcachePacker(object):
     '''
     Kyoto Tycoon servers supporting the memcached protocol store the item flags (if enabled)
@@ -21,6 +41,8 @@ class MemcachePacker(object):
     Note: Flags are ignored on read and *zeroed* on write. The only exception to this is the
           gzip flag, which triggers decompression when gzip is enabled. When compressing data
           on write, the gzip flag will also be set (but all other flag bits are still zeroed).
+
+          If you need control over the flags, use the "SimpleMemcachePacker" class instead.
 
     '''
 

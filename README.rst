@@ -72,6 +72,7 @@ Implicit operations like key removal upon expiration don't.
 Unlike the client library, the replication slave always handles the
 "key" and "value" attributes as opaque binary data.
 
+
 MEMCACHE-ENABLED SERVERS
 ------------------------
 Kyoto Tycoon supports a subset of the memcached protocol. When a
@@ -83,7 +84,7 @@ for example, a Python application is writing HTML pages to the Kyoto
 server and an HTTP server is reading from it using a memcached client
 library.
 
-Example:
+Example::
 
     from kyototycoon import KyotoTycoon, KT_PACKER_CUSTOM
     from kyototycoon.packers import MemcachePacker
@@ -92,7 +93,27 @@ Example:
     kt = KyotoTycoon(pack_type=KT_PACKER_CUSTOM, custom_packer=mp)
 
     kt.open("127.0.0.1", 1978)
-    ...
+
+    kt.set("key", "value")
+    value = kt.get("key")
+
+    kt.close()
+
+To handle ``(value, flags)`` pairs without any additional processing,
+the ``SimpleMemcachePacker`` can be used::
+
+    from kyototycoon import KyotoTycoon, KT_PACKER_CUSTOM
+    from kyototycoon.packers import SimpleMemcachePacker
+
+    smp = SimpleMemcachePacker()
+    kt = KyotoTycoon(pack_type=KT_PACKER_CUSTOM, custom_packer=smp)
+
+    kt.open("127.0.0.1", 1978)
+
+    kt.set("key", ("value", 123))
+    value, flags = kt.get("key")
+
+    kt.close()
 
 
 COMPATIBILITY
