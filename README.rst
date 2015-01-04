@@ -120,9 +120,9 @@ Or, you can install the latest stable release from PyPI::
 
 AUTHORS
 -------
+  * Carlos Rodrigues <cefrodrigues@gmail.com> (current maintainer)
   * Toru Maesaka <dev@torum.net>
   * Stephen Hamer <stephen.hamer@upverter.com>
-  * Carlos Rodrigues <cefrodrigues@gmail.com>
 
 Binary protocol support was added based on Ulrich Mierendorff's code.
 You can find the original library at the following URL:
