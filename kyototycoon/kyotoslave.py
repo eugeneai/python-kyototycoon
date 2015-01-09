@@ -4,6 +4,7 @@
 #
 # Redistribution and use of this source code is licensed under
 # the BSD license. See COPYING file for license description.
+#
 
 import socket
 import struct

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 #
 # Copyright 2011, Toru Maesaka
+# Copyright 2013, Stephen Hamer
+# Copyright 2013, Carlos Rodrigues
 #
 # Redistribution and use of this source code is licensed under
 # the BSD license. See COPYING file for license description.
 #
-# Note that python-kyototycoon follows the following interface
-# standard: http://fallabs.com/kyototycoon/kyototycoon.idl
 
 import warnings
 
