@@ -654,7 +654,7 @@ class ProtocolHandler(object):
         path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
         value = self.pack(value)
-        status = self._rest_put('set', path, value, expire)
+        status = self._rest_put(b'set', path, value, expire)
         if status != 201:
             raise KyotoTycoonException('protocol error [%d]' % status)
 
@@ -665,7 +665,7 @@ class ProtocolHandler(object):
         path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
         value = self.pack(value)
-        status = self._rest_put('add', path, value, expire)
+        status = self._rest_put(b'add', path, value, expire)
         if status != 201:
             raise KyotoTycoonException('protocol error [%d]' % status)
 
@@ -716,7 +716,7 @@ class ProtocolHandler(object):
         path = '/%s/%s' % (db, quote(key.encode('utf-8')))
 
         value = self.pack(value)
-        status = self._rest_put('replace', path, value, expire)
+        status = self._rest_put(b'replace', path, value, expire)
         if status != 201:
             return False
 
@@ -864,9 +864,9 @@ class ProtocolHandler(object):
         return rv
 
     def _rest_put(self, operation, key, value, expire):
-        headers = {'X-Kt-Mode' : operation}
+        headers = {b'X-Kt-Mode' : operation}
         if expire is not None:
-            headers["X-Kt-Xt"] = str(int(time.time()) + expire)
+            headers[b'X-Kt-Xt'] = str(int(time.time()) + expire)
 
         self.conn.request('PUT', key, value, headers)
         res, body = self.getresponse()
