@@ -19,6 +19,42 @@ OP_SET = 0xa1
 OP_REMOVE = 0xa2
 OP_CLEAR = 0xa5
 
+def _read_varnum(data):
+    value = 0
+
+    for i, byte in enumerate(data):
+        value = (value << 7) + (byte & 0x7f)
+
+        if byte < 0x80:
+            return (value, data[i+1:])
+
+    return (0, data)
+
+def _decode_log_entry(entry_data):
+    sid, db, db_op = struct.unpack('!HHB', entry_data[:5])
+    entry = {'sid': sid, 'db': db, 'op': db_op}
+
+    if db_op == OP_CLEAR:
+        return entry
+
+    key_size, buf = _read_varnum(bytearray(entry_data[5:]))
+
+    if db_op == OP_REMOVE:
+        entry['key'] = bytes(buf[:key_size])
+
+        return entry
+
+    if db_op == OP_SET:
+        value_size, buf = _read_varnum(buf)
+
+        entry['key'] = bytes(buf[:key_size])
+        entry['expires'], = struct.unpack('!Q', b'\x00\x00\x00' + bytes(buf[key_size:key_size+5]))
+        entry['value'] = bytes(buf[key_size+5:key_size+value_size])
+
+        return entry
+
+    raise KyotoTycoonException('unsupported database operation [%s]' % hex(db_op))
+
 class KyotoSlave(object):
     def __init__(self, sid, host='127.0.0.1', port=1978, timeout=30):
         '''Initialize a Kyoto Tycoon replication slave with ID "sid" to the specified master.'''
@@ -54,56 +90,18 @@ class KyotoSlave(object):
             if magic != MB_REPL:
                 raise KyotoTycoonException('bad response [%s]' % hex(magic))
 
-            # Common log entry information...
-            size, = struct.unpack('!I', self._read(4))
-            sid, db, db_op = struct.unpack('!HHB', self._read(5))
+            log_size, = struct.unpack('!I', self._read(4))
+            entry = _decode_log_entry(self._read(log_size))
 
-            entry = {'sid': sid, 'db': db, 'op': db_op}
-
-            buf = bytearray(self._read(size - 5))
-
-            if sid == self.sid:  # ...this must never happen!
+            if entry['sid'] == self.sid:  # ...this must never happen!
                 raise KyotoTycoonException('bad log entry [sid=%d]' % sid)
 
-            if db_op == OP_CLEAR:
-                yield entry
-                continue
-
-            if db_op == OP_REMOVE:
-                key_size, buf = self._read_varnum(buf)
-                entry['key'] = bytes(buf[:key_size])
-
-                yield entry
-                continue
-
-            if db_op == OP_SET:
-                key_size, buf = self._read_varnum(buf)
-                value_size, buf = self._read_varnum(buf)
-
-                entry['key'] = bytes(buf[:key_size])
-                entry['expires'], = struct.unpack('!Q', b'\x00\x00\x00' + bytes(buf[key_size:key_size+5]))
-                entry['value'] = bytes(buf[key_size+5:key_size+value_size])
-
-                yield entry
-                continue
-
-            raise KyotoTycoonException('unsupported database operation [%s]' % hex(db_op))
+            yield entry
 
     def close(self):
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
         return True
-
-    def _read_varnum(self, data):
-        value = 0
-
-        for i, byte in enumerate(data):
-            value = (value << 7) + (byte & 0x7f)
-
-            if byte < 0x80:
-                return (value, data[i+1:])
-
-        return (0, data)
 
     def _write(self, data):
         self.socket.sendall(data)
