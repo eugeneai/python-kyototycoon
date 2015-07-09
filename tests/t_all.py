@@ -6,7 +6,7 @@
 # the BSD license. See COPYING file for license description.
 #
 # Kyoto Tycoon should be started like this:
-#   $ ktserver -ls -scr t_script.lua '%' '%'
+#   $ ktserver -port 11978 -ls -scr t_script.lua '%' '%'
 #
 # USAGE:
 #   $ python t_all.py

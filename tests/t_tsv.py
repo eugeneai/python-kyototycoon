@@ -12,7 +12,7 @@ from kyototycoon import KyotoTycoon
 class UnitTest(unittest.TestCase):
     def setUp(self):
         self.kt_handle = KyotoTycoon()
-        self.kt_handle.open()
+        self.kt_handle.open(port=11978)
 
     def test_tsv_rpc(self):
         key = 'tabbed\tkey'

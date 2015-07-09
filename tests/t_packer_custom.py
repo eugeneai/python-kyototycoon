@@ -29,11 +29,11 @@ class UnitTest(unittest.TestCase):
     def setUp(self):
         self.kt_bin_handle = KyotoTycoon(binary=True, pack_type=kt_binary.KT_PACKER_CUSTOM,
                                                       custom_packer=CustomPacker())
-        self.kt_bin_handle.open()
+        self.kt_bin_handle.open(port=11978)
 
         self.kt_http_handle = KyotoTycoon(binary=False, pack_type=kt_http.KT_PACKER_CUSTOM,
                                                         custom_packer=CustomPacker())
-        self.kt_http_handle.open()
+        self.kt_http_handle.open(port=11978)
 
     def test_packer_bytes(self):
         self.assertTrue(self.kt_http_handle.clear())

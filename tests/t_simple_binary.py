@@ -14,10 +14,10 @@ class UnitTest(unittest.TestCase):
     def setUp(self):
         # For operations not supported by the binary protocol, but useful for testing it...
         self.kt_handle_http = KyotoTycoon(binary=False)
-        self.kt_handle_http.open()
+        self.kt_handle_http.open(port=11978)
 
         self.kt_handle = KyotoTycoon(binary=True, pack_type=KT_PACKER_PICKLE)
-        self.kt_handle.open()
+        self.kt_handle.open(port=11978)
         self.LARGE_KEY_LEN = 8000
 
     def test_set(self):

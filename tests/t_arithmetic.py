@@ -12,7 +12,7 @@ from kyototycoon import KyotoTycoon, KyotoTycoonException
 class UnitTest(unittest.TestCase):
     def setUp(self):
         self.kt_handle = KyotoTycoon()
-        self.kt_handle.open()
+        self.kt_handle.open(port=11978)
         self.LARGE_KEY_LEN = 8000
 
     def test_increment(self):

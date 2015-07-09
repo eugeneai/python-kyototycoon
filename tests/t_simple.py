@@ -12,7 +12,7 @@ from kyototycoon import KyotoTycoon, KyotoTycoonException, KT_PACKER_PICKLE
 class UnitTest(unittest.TestCase):
     def setUp(self):
         self.kt_handle = KyotoTycoon(binary=False, pack_type=KT_PACKER_PICKLE)
-        self.kt_handle.open()
+        self.kt_handle.open(port=11978)
         self.LARGE_KEY_LEN = 8000
 
     def test_set(self):

@@ -13,10 +13,10 @@ from kyototycoon import KyotoTycoon
 class UnitTest(unittest.TestCase):
     def setUp(self):
         self.kt_http_handle = KyotoTycoon(binary=False)
-        self.kt_http_handle.open()
+        self.kt_http_handle.open(port=11978)
 
         self.kt_bin_handle = KyotoTycoon(binary=True)
-        self.kt_bin_handle.open()
+        self.kt_bin_handle.open(port=11978)
 
         self.LARGE_KEY_LEN = 8000
 

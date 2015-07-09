@@ -20,10 +20,10 @@ DB_INVALID = 3
 class UnitTest(unittest.TestCase):
     def setUp(self):
         self.kt_handle_http = KyotoTycoon(binary=False)
-        self.kt_handle_http.open()
+        self.kt_handle_http.open(port=11978)
 
         self.kt_handle_bin = KyotoTycoon(binary=True)
-        self.kt_handle_bin.open()
+        self.kt_handle_bin.open(port=11978)
 
         self.LARGE_KEY_LEN = 8000
 
