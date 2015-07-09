@@ -29,9 +29,5 @@ def _run_all_tests():
 
     return loader.loadTestsFromNames(module_names)
 
-def ScriptTestCase():
-    loader = unittest.TestLoader()
-    return loader.loadTestsFromName('t_script')
-
 if __name__ == '__main__':
     unittest.main(defaultTest='_run_all_tests')
